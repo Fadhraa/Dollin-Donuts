@@ -16,32 +16,33 @@ export default function AdminNav({children}) {
                 {/* Navigation Links */}
                 <div className="flex flex-col gap-3 p-6 flex-grow overflow-y-auto">
                     <Link 
-                        href="/dashboard" 
-                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/dashboard') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
+                        href="/admin/dashboard" 
+                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/admin/dashboard') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
                     >
                         <span className="material-symbols-outlined text-xl">dashboard</span>
                         Dashboard
                     </Link>
                     <Link 
-                        href="/products" 
-                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/products') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
+                        href="/admin/products" 
+                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/admin/products') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
                     >
                         <span className="material-symbols-outlined text-xl">inventory_2</span>
-                        Products
+                        Produk
                     </Link>
                     <Link 
                         href="/admin/orders" 
                         className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/admin/orders') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
                     >
                         <span className="material-symbols-outlined text-xl">receipt_long</span>
-                        Orders
+                        Pesanan
                     </Link>
                     <Link 
-                        href="/admin/customers" 
-                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4 ${url.startsWith('/admin/customers') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
+                        href="/admin/transaction" 
+                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4
+                             ${url.startsWith('/admin/transaction') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
                     >
-                        <span className="material-symbols-outlined text-xl">group</span>
-                        Customers
+                        <span className="material-symbols-outlined text-xl">monetization_on</span>
+                        Transaksi
                     </Link>
                 </div>
 
