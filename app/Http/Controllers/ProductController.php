@@ -168,4 +168,16 @@ class ProductController extends Controller
 
         return redirect()->route('products')->with('success', 'Produk berhasil diperbarui!');
     }
+    public function destroy($id)
+    {
+        $product = Product::findOrFail($id);
+
+        // Opsional: Jika ada relasi paket, hapus dulu relasinya
+        $product->packageItems()->detach();
+
+        // Eksekusi hapus!
+        $product->delete();
+
+        return redirect()->back()->with('success', 'Produk berhasil dilenyapkan!');
+    }
 }

@@ -1,6 +1,6 @@
 import AdminNav from "../layouts/admin_nav";
 import { useState } from "react";
-import { useForm } from "@inertiajs/react";
+import { useForm, router } from "@inertiajs/react";
 
 function Products({ products = [], satuanProducts = [] }) {
     const [modalProduct, setModalProduct] = useState(false);
@@ -55,6 +55,16 @@ function Products({ products = [], satuanProducts = [] }) {
         );
         setModalProduct(true);
     }
+    const deleteProduct = (id) => {
+        if (confirm("Yakin mau hapus produk ini? Data tidak bisa kembali!")) {
+            router.delete(`/admin/products/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert("Produk berhasil dihapus!");
+                },
+            });
+        }
+    };
     const submitData = (e) => {
         e.preventDefault();
         if(isEdit){
