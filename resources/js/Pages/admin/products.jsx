@@ -2,9 +2,11 @@ import AdminNav from "../layouts/admin_nav";
 import { useState } from "react";
 import { useForm } from "@inertiajs/react";
 
-function Products({ satuanProducts = [] }) {
+function Products({ products = [], satuanProducts = [] }) {
     const [modalProduct, setModalProduct] = useState(false);
-
+    const [isEdit, setIsEdit] = useState(false);
+    const [editId, setEditId] = useState(null);
+    const [oldGambar, setOldGambar] = useState(null);
     const { data, setData, post, processing, errors, reset } = useForm({
         nama: "",
         harga: "",
@@ -30,16 +32,48 @@ function Products({ satuanProducts = [] }) {
         }
         setData('package_items', items);
     };
-
-    const TambahProduk = (e) => {
+    const editProduct = (product) => {
+        setIsEdit(true);
+        setEditId(product.id);
+        setOldGambar(product.gambar);
+        setData(
+            {
+                nama: product.nama,
+                harga: product.harga,
+                stok: product.stok,
+                deskripsi: product.deskripsi || "",
+                is_active: product.is_active,
+                is_favorite: product.is_favorite,
+                is_new: product.is_new,
+                tipe: product.tipe,
+                kategori: product.kategori,
+                gambar: null,
+                jumlah_pilihan: product.jumlah_pilihan || "",
+                package_items: product.package_items || [],
+                _method: 'PUT',
+            }
+        );
+        setModalProduct(true);
+    }
+    const submitData = (e) => {
         e.preventDefault();
-        post('/admin/products', {
-            forceFormData: true,
-            onSuccess: () => {
-                setModalProduct(false);
+        if(isEdit){
+            post(`/admin/products/${editId}`, {
+                forceFormData: true,
+                onSuccess: () => {
+                    setModalProduct(false);
+                    reset();
+                },
+            });
+        }else{
+            post('/admin/products', {
+                forceFormData: true,
+                onSuccess: () => {
+                    setModalProduct(false);
                 reset();
             },
         });
+        }
     }
 
     const openModalProduct = () => {
@@ -48,6 +82,9 @@ function Products({ satuanProducts = [] }) {
 
     const closeModal = () => {
         setModalProduct(false);
+        setIsEdit(false);
+        setEditId(null);
+        setOldGambar(null);
         reset();
     }
     return (
@@ -75,7 +112,7 @@ function Products({ satuanProducts = [] }) {
                         {/* Header Modal */}
                         <div className="bg-surface p-6 border-b border-on-surface-variant/10 flex justify-between items-center">
                             <div>
-                                <h2 className="text-2xl font-black text-primary tracking-wide">Tambah Produk Baru</h2>
+                                <h2 className="text-2xl font-black text-primary tracking-wide">{isEdit ? 'Edit Produk' : 'Tambah Produk Baru'}</h2>
                                 <p className="text-sm font-medium text-on-surface-variant mt-1">Lengkapi form di bawah untuk menambahkan donat ke menu.</p>
                             </div>
                             <button onClick={() => setModalProduct(false)} className="text-on-surface-variant hover:text-red-500 hover:bg-red-500/10 p-2 rounded-full transition-colors flex items-center justify-center">
@@ -84,7 +121,7 @@ function Products({ satuanProducts = [] }) {
                         </div>
 
                         {/* Form Modal */}
-                        <form onSubmit={TambahProduk}>
+                        <form onSubmit={submitData}>
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
                                 
                                 {/* Nama Produk */}
@@ -107,28 +144,35 @@ function Products({ satuanProducts = [] }) {
                                 </div>
 
                                 {/* Kategori & Tipe */}
-                                <div>
-                                    <label className="block text-sm font-bold text-on-surface-variant mb-1">Kategori</label>
-                                    <select value={data.kategori} onChange={e => setData('kategori', e.target.value)} className="w-full bg-surface-container border border-on-surface-variant/20 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2 text-sm outline-none">
-                                        <option value="donuts">Donuts</option>
-                                        <option value="mochi">Mochi</option>
-                                        <option value="pastry">Pastry</option>
-                                        <option value="beverage">Beverage</option>
-                                    </select>
-                                    {errors.kategori && <span className="text-red-500 text-xs">{errors.kategori}</span>}
-                                </div>
-                                <div>
+                                {data.tipe === 'satuan' && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-on-surface-variant mb-1">Kategori</label>
+                                        <select value={data.kategori} onChange={e => setData('kategori', e.target.value)} className="w-full bg-surface-container border border-on-surface-variant/20 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2 text-sm outline-none">
+                                            <option value="donuts">Donuts</option>
+                                            <option value="mochi">Mochi</option>
+                                            <option value="minuman">Minuman</option>
+                                            <option value="pastry">Pastry</option>
+                                        </select>
+                                        {errors.kategori && <span className="text-red-500 text-xs">{errors.kategori}</span>}
+                                    </div>
+                                )}
+                                <div  className={data.tipe === 'paket' ? "md:col-span-2" : ""}>
                                     <label className="block text-sm font-bold text-on-surface-variant mb-1">Tipe Penjualan</label>
-                                    <select value={data.tipe} onChange={e => {
+                                    <select disabled={isEdit} value={data.tipe} onChange={e => {
                                         setData('tipe', e.target.value);
                                         if (e.target.value === 'satuan') {
                                             setData('jumlah_pilihan', "");
                                             setData('package_items', []);
                                         }
-                                    }} className="w-full bg-surface-container border border-on-surface-variant/20 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2 text-sm outline-none">
+                                    }} className="disabled:bg-surface-container/50 w-full bg-surface-container border border-on-surface-variant/20 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2 text-sm outline-none">
                                         <option value="satuan">Satuan</option>
                                         <option value="paket">Paket / Kotak</option>
                                     </select>
+                                    {isEdit && (
+                                        <p className="text-xs text-blue-800 mt-1">
+                                            Tidak bisa diubah untuk menjaga konsistensi data.
+                                        </p>
+                                    )}
                                     {errors.tipe && <span className="text-red-500 text-xs">{errors.tipe}</span>}
                                 </div>
 
@@ -192,11 +236,28 @@ function Products({ satuanProducts = [] }) {
 
                                 {/* Upload Gambar */}
                                 <div className="md:col-span-2 mt-2">
-                                    <label className="block text-sm font-bold text-on-surface-variant mb-1">Unggah Gambar</label>
-                                    <div className="border-2 border-dashed border-on-surface-variant/30 rounded-xl p-4 flex flex-col items-center justify-center bg-surface-container/50 hover:bg-surface-container transition-colors cursor-pointer relative">
-                                        <input type="file" onChange={e => setData('gambar', e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" />
-                                        <span className="material-symbols-outlined text-3xl text-primary/60 mb-1">cloud_upload</span>
-                                        <p className="text-sm font-bold text-on-surface-variant">{data.gambar ? data.gambar.name : "Pilih gambar dari perangkat"}</p>
+                                    <label className="block text-sm font-bold text-on-surface-variant mb-1">
+                                        {data.tipe === 'satuan' ? "Unggah Gambar" : "Unggah Gambar Box (Opsional)"}
+                                    </label>
+                                    <div className={`group border-2 border-dashed rounded-xl flex flex-col items-center justify-center bg-surface-container/50 transition-colors cursor-pointer relative overflow-hidden ${data.gambar || oldGambar ? 'border-primary/50 h-56 hover:border-primary' : 'border-on-surface-variant/30 h-32 hover:bg-surface-container'}`}>
+                                        {/* Invisible file input that tightly covers the exact shape wrapper */}
+                                        <input type="file" onChange={e => setData('gambar', e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*" />
+                                        
+                                        {(data.gambar || oldGambar) ? (
+                                            <div className="absolute inset-0 w-full h-full z-10 pointer-events-none">
+                                                <img src={data.gambar ? URL.createObjectURL(data.gambar) : oldGambar} alt="Preview Foto" className="w-full h-full object-cover" />
+                                                {/* Ini adalah layer hitam yang muncul saat di-hover */}
+                                                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                    <span className="material-symbols-outlined text-white text-3xl mb-1">edit</span>
+                                                    <span className="text-white font-bold text-sm">Klik untuk mengganti gambar</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center p-4 z-10 pointer-events-none">
+                                                <span className="material-symbols-outlined text-3xl text-primary/60 mb-1">cloud_upload</span>
+                                                <p className="text-sm font-bold text-on-surface-variant">Pilih atau Seret gambar ke sini</p>
+                                            </div>
+                                        )}
                                     </div>
                                     {errors.gambar && <span className="text-red-500 text-xs">{errors.gambar}</span>}
                                 </div>
@@ -207,7 +268,7 @@ function Products({ satuanProducts = [] }) {
                                 <button type="button" onClick={closeModal} className="text-on-surface-variant hover:bg-surface-variant px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">Batal</button>
                                 <button type="submit" disabled={processing} className={`bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${processing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:-translate-y-0.5'}`}>
                                     <span className="material-symbols-outlined text-sm">{processing ? 'hourglass_empty' : 'save'}</span>
-                                    {processing ? 'Menyimpan...' : 'Simpan Produk'}
+                                    {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Produk'}
                                 </button>
                             </div>
                         </form>
@@ -219,6 +280,69 @@ function Products({ satuanProducts = [] }) {
                     <div className="flex items-center gap-4 w-full px-2">
                         <span className="material-symbols-outlined text-on-surface-variant">search</span>
                         <input type="text" placeholder="Cari donat menu..." className="w-full bg-transparent border-none focus:ring-0 text-on-surface py-2 outline-none" />
+                    </div>
+                </div>
+
+                {/* Tabel Produk */}
+                <div className="w-full bg-surface-container flex items-center mt-6 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto w-full">
+                        <table className="w-full">
+                            <thead className="text-xs uppercase bg-primary-container tracking-wider font-bold">
+                                <tr className="border-b border-on-surface-variant/10 text-left">
+                                    <th className="px-6 py-4 text-center text-on-primary-container font-semibold w-16">No</th>
+                                    <th className="px-6 py-4 text-on-primary-container font-semibold">Sajian</th>
+                                    <th className="px-6 py-4 text-on-primary-container font-semibold">Kategori</th>
+                                    <th className="px-6 py-4 text-on-primary-container font-semibold">Harga</th>
+                                    <th className="px-6 py-4 text-on-primary-container font-semibold">Status</th>
+                                    <th className="px-6 py-4 text-center text-on-primary-container font-semibold w-24">Stok</th>
+                                    <th className="px-6 py-4 text-center text-on-primary-container font-semibold w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-on-surface-variant/10">
+                                {products.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-8 text-center text-on-surface-variant font-medium text-sm">Belum ada produk yang ditambahkan.</td>
+                                    </tr>
+                                ) : (
+                                    products.map((product, index) => (
+                                        <tr key={product.id} className="text-on-surface-variant text-xs uppercase tracking-widest font-bold bg-white hover:bg-surface-container/30 transition-colors">
+                                            <td className="px-6 py-4 text-center align-middle">{index + 1}</td>
+                                            <td className="px-6 py-4 align-middle">
+                                                <div className="flex items-center gap-4">
+                                                    <img src={product.gambar} alt={product.nama} className="w-12 h-12 rounded-lg object-cover shadow-sm bg-surface-container" />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-on-surface font-black text-sm">{product.nama}</span>
+                                                        <span className="text-[10px] text-primary">{product.kode_produk}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 align-middle">{product.kategori}</td>
+                                            <td className="px-6 py-4 align-middle">Rp {Number(product.harga).toLocaleString('id-ID')}</td>
+                                            <td className="px-6 py-4 align-middle">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider ${product.is_active ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600'}`}>
+                                                    {product.is_active ? 'TERSEDIA' : 'HABIS / OFF'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center align-middle">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider ${product.is_active ? 'bg-primary/20 text-primary' : 'bg-on-surface-variant/20 text-on-surface-variant'}`}>
+                                                    {product.stok}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center align-middle">
+                                                <div className="flex gap-3 justify-center items-center">
+                                                    <button onClick={() => editProduct(product)} className="text-primary hover:text-primary/80 transition-transform hover:scale-110">
+                                                        <span className="text-xl material-symbols-outlined">edit</span>
+                                                    </button>
+                                                    <button onClick={() => deleteProduct(product.id)} className="text-red-500 hover:text-red-500/80 transition-transform hover:scale-110">
+                                                        <span className="text-xl material-symbols-outlined">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

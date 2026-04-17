@@ -61,7 +61,7 @@ export default function AdminNav({children}) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto bg-surface-container-lowest">
+            <main className="flex-1 overflow-y-auto">
                 {children}
             </main>
         </div>
