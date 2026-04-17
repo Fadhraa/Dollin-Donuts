@@ -6,7 +6,7 @@ use App\Http\Controllers\AuthController;
 use Inertia\Inertia;
 use App\Http\Controllers\ProductController;
 
-Route::get('/', fn() => Inertia::render('Welcome', [
+Route::get('/', fn() => Inertia::render('Main', [
     'laravelVersion' => Application::VERSION,
     'phpVersion' => PHP_VERSION,
 ]));
