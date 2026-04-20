@@ -21,5 +21,6 @@ Route::middleware(['auth'])->group(function () {
     // Orders
     Route::get('/admin/orders', fn() => Inertia::render('admin/orders'))->name('orders');
     Route::get('/admin/transaction', fn() => Inertia::render('admin/transaction'))->name('transaction');
+    Route::get('/admin/ordermanagement', fn() => Inertia::render('admin/ordermanagement'))->name('ordermanagement');
     Route::post('/logout', [AuthController::class, 'Logout']);
 });

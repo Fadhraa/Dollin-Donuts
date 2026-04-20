@@ -44,6 +44,14 @@ export default function AdminNav({children}) {
                         <span className="material-symbols-outlined text-xl">monetization_on</span>
                         Transaksi
                     </Link>
+                    <Link 
+                        href="/admin/ordermanagement" 
+                        className={`px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ease-in-out flex items-center gap-4
+                             ${url.startsWith('/admin/ordermanagement') ? 'bg-primary text-on-primary shadow-md transform scale-105' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'}`}
+                    >
+                        <span className="material-symbols-outlined text-xl">assignment_turned_in</span>
+                        Kelola Pesanan
+                    </Link>
                 </div>
 
                 {/* Footer Logout */}
