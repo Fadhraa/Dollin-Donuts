@@ -350,7 +350,19 @@ export default function Welcome({ products = [] }) {
                         <form className="space-y-4">
                             {/* Input Nama, Telp, Alamat di sini */}
                             <div className="pt-6 border-t-2 border-dashed border-on-surface-variant/20 mt-6">
-                                <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <label htmlFor="nama" className="block text-sm font-bold text-on-surface-variant mb-2">Nama Lengkap</label>
+                                    <input required type="text" id="nama" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan nama Anda" />
+                                </div>
+                                <div>
+                                    <label htmlFor="nohp" className="block text-sm font-bold text-on-surface-variant mb-2">No. HP</label>
+                                    <input required type="number" id="nohp" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan No. HP Anda" />
+                                </div>
+                                <div>
+                                    <label htmlFor="alamat" className="block text-sm font-bold text-on-surface-variant mb-2">Alamat</label>
+                                    <input required type="text" id="alamat" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan Alamat Anda" />
+                                </div>
+                                <div className="flex justify-between items-center my-6">
                                     <span className="text-on-surface-variant font-bold">Total Pembayaran</span>
                                     <span className="text-2xl font-black text-primary">Rp {calculateTotal().toLocaleString('id-ID')}</span>
                                 </div>
