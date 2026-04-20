@@ -5,11 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use Inertia\Inertia;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\LandingController;
 
-Route::get('/', fn() => Inertia::render('Main', [
-    'laravelVersion' => Application::VERSION,
-    'phpVersion' => PHP_VERSION,
-]));
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 Route::post('/login', [AuthController::class, 'Login']);

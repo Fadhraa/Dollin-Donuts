@@ -1,6 +1,118 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 
-export default function Welcome() {
+export default function Welcome({ products = [] }) {
+    const [activeTab, setActiveTab] = useState('Semua');
+    const [activeType, setActiveType] = useState('satuan');
+    const [configuringBox, setConfiguringBox] = useState(null);
+    const [selectedBoxItems, setSelectedBoxItems] = useState([]);
+    const [favorites, setFavorites] = useState([]);
+    const [cart, setCart] = useState([]);
+    console.log(cart);
+
+    const addToCart = (product) => {
+        
+   
+        if (product.tipe === 'satuan') {
+            const existingItem = cart.find(item => item.id === product.id && item.type === 'satuan');
+            
+            if (existingItem) {
+                setCart(cart.map(item => 
+                    item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+                ));
+            } else {
+                setCart([...cart, { 
+                    id: product.id,
+                    kode_produk: product.kode_produk,
+                    nama: product.nama,
+                    harga: product.harga,
+                    gambar: product.gambar,
+                    type: product.tipe,
+                    qty: 1,
+                    uniqueId: Date.now(),
+                    contents: product.tipe === 'paket' ? selectedBoxItems : []
+                }]);
+            }
+        } else {
+            const itemUntukKeranjang = {
+                id: product.id,
+                kode_produk: product.kode_produk,
+                nama: product.nama,
+                harga: product.harga,
+                gambar: product.gambar, // Tetap bawa gambar agar UI bagus
+                type: product.tipe,
+                qty: 1,
+                uniqueId: Date.now(),
+                contents: product.tipe === 'paket' ? selectedBoxItems : []
+            };
+            setCart([...cart, itemUntukKeranjang]);
+            setConfiguringBox(null);
+        }
+
+    };
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.harga * item.qty, 0);
+    };
+    const removeFromCart = (itemToRemove) => {
+    // Filter berdasarkan uniqueId agar jika ada 2 box yg sama, yang terhapus cuma satu
+    setCart(cart.filter(item => (item.uniqueId || item.id) !== (itemToRemove.uniqueId || itemToRemove.id)));
+    };
+
+    const renderContentsText = (contentIds) => {
+    if (!contentIds || contentIds.length === 0) return "";
+    
+    // Hitung kemunculan tiap donat
+    const counts = {};
+    contentIds.forEach(id => {
+        const product = products.find(p => p.id === id);
+        if (product) {
+            counts[product.nama] = (counts[product.nama] || 0) + 1;
+        }
+    });
+    // Ubah jadi teks: "2x Choco, 1x Matcha"
+    return Object.entries(counts)
+        .map(([nama, qty]) => `${qty}x ${nama}`)
+        .join(", ");
+    };
+
+    const toggleFavorite = (id) => {
+        setFavorites(prev => 
+            prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
+        );
+    };
+
+    const handleAddProduct = (product) => {
+        if (product.tipe === 'satuan') {
+            // Placeholder untuk keranjang satuan
+           
+            addToCart(product);
+        } else {
+            setConfiguringBox(product);
+            setSelectedBoxItems([]);
+        }
+    };
+
+    const toggleItemInBox = (id) => {
+        if (selectedBoxItems.length < configuringBox.jumlah_pilihan) {
+            setSelectedBoxItems([...selectedBoxItems, id]);
+        } else {
+            alert("Kotak sudah penuh!");
+        }
+    };
+
+    const filteredProducts = products.filter((product) => {
+        const matchType = product.tipe === activeType;
+        const matchCategory = activeTab === 'Semua' || product.kategori === activeTab;
+        return matchType && matchCategory;
+    });
+ 
+    if(activeTab === 'all'){
+        products.map((product) => {
+            console.log(product.nama);
+        })
+    }
+
     return (
         <div className="bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container font-body">
             <Head title="Dollin Donuts | Glaze & Grain">
@@ -8,6 +120,7 @@ export default function Welcome() {
                 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
                 <style>{`
                     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                    .material-symbols-outlined.fill-1 { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
                     body { font-family: 'Be Vietnam Pro', sans-serif; }
                     h1, h2, h3, .brand-font { font-family: 'Plus Jakarta Sans', sans-serif; }
                 `}</style>
@@ -62,110 +175,259 @@ export default function Welcome() {
                     </div>
                 </div>
             </section>
-
+                
             {/* Menu Section */}
             <section className="py-24 px-8 bg-surface-container-low" id="menu">
+           
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-8">
                         <h2 className="text-4xl font-bold text-primary mb-4">Our Signature Selection</h2>
                         <p className="text-on-surface-variant">The finest textures from our bakery to your doorstep.</p>
                     </div>
+                    {/* Satuan dan Paketan */}
+
+                    <div className='max-w-md mx-auto py-4 mb-12'>
+                        <h3 className='text-sm font-black text-primary/60 mb-4 text-center uppercase tracking-widest'>
+                            Pilih Pengalaman Belanja
+                        </h3>
+                        
+                        <div className='relative bg-surface-container p-1.5 rounded-2xl flex items-center shadow-inner group'>
+                            {/* Latar Belakang Melayang (Animasi) */}
+                            <div 
+                                className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl shadow-lg transition-all duration-500 ease-out z-0 ${activeType === 'paket' ? 'translate-x-[100%]' : 'translate-x-0'}`}
+                            ></div>
+
+                            <button 
+                                onClick={() => setActiveType('satuan')}
+                                className={`relative z-10 flex-1 py-3.5 rounded-xl font-black text-sm transition-colors duration-300 flex items-center justify-center gap-2 ${activeType === 'satuan' ? 'text-on-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                            >
+                                <span className="material-symbols-outlined text-xl">bakery_dining</span>
+                                Beli Satuan
+                            </button>
+
+                            <button 
+                                onClick={() => setActiveType('paket')}
+                                className={`relative z-10 flex-1 py-3.5 rounded-xl font-black text-sm transition-colors duration-300 flex items-center justify-center gap-2 ${activeType === 'paket' ? 'text-on-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                            >
+                                <span className="material-symbols-outlined text-xl">inventory_2</span>
+                                Beli Paketan
+                            </button>
+                        </div>
+                    </div>
                     {/* Category Tabs */}
                     <div className="flex flex-wrap justify-center gap-3 mb-12">
-                        <button className="px-6 py-2 rounded-full bg-primary text-on-primary font-medium">All Flavors</button>
-                        <button className="px-6 py-2 rounded-full bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors font-medium">Glaze Series</button>
-                        <button className="px-6 py-2 rounded-full bg-surface-container text-on-surface-variant hover:bg-tertiary-container transition-colors font-medium">Mochi Series</button>
-                        <button className="px-6 py-2 rounded-full bg-surface-container text-on-surface-variant hover:bg-primary-container transition-colors font-medium">Limited Edition</button>
+                        <button onClick={() => setActiveTab('Semua')} className={`px-6 py-2 rounded-full ${activeTab === 'Semua' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-secondary-container'} transition-colors font-medium`}>Semua Varian</button>
+                        <button onClick={() => setActiveTab('donuts')} className={`px-6 py-2 rounded-full ${activeTab === 'donuts' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-secondary-container'} transition-colors font-medium`}>Donuts</button>
+                        <button onClick={() => setActiveTab('mochi')} className={`px-6 py-2 rounded-full ${activeTab === 'mochi' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-primary-container'} transition-colors font-medium`}>Mochi</button>
+                        <button onClick={() => setActiveTab('susu')} className={`px-6 py-2 rounded-full ${activeTab === 'susu' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-primary-container'} transition-colors font-medium`}>Susu</button>
+                        <button onClick={() => setActiveTab('minuman')} className={`px-6 py-2 rounded-full ${activeTab === 'minuman' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-tertiary-container'} transition-colors font-medium`}>Minuman</button>
                     </div>
                     {/* Bento Grid Menu */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Item 1 */}
-                        <div className="group bg-surface-container-lowest p-6 rounded-lg transition-all hover:shadow-lg">
-                            <div className="aspect-square mb-6 overflow-hidden rounded-lg">
-                                <img alt="Dollin Single Snow" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBle1UT7jo4Cy8HVsIkQPp6Rg4k_vrRNwGWwhtdeC53f6uPWEmCink5uiG9brmTROfTjrBjwbzyd3rcYOnD5cB9d3XxZw9cKUFz9dfi-JPOkHnctpsxx961y_2Y7fnvE9iI93uLl9oSKmn5VnFrCawc_amPXJs8cBXk4h0gpo-vZTBvsyeM2fHSeu2pjO9MFuCh-QHiPXN6ei5KXjETkgysg6DDyu1mxdKbSjDHtgD1rzDqLFJTM9c06cbdRGiC_Vv2extN6gf6xdHQ" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                        {filteredProducts.length === 0 ? (
+                            <div className="text-center">
+                                <p className="text-on-surface-variant">Tidak ada produk</p>
                             </div>
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold text-primary">Dollin Single Snow</h3>
-                                <span className="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">$4.50</span>
-                            </div>
-                            <p className="text-on-surface-variant text-sm mb-6">Our signature airy dough dusted with Madagascar vanilla snow sugar.</p>
-                            <button className="w-full py-3 border border-outline-variant rounded-xl text-primary font-bold hover:bg-primary hover:text-on-primary transition-all active:scale-95">Add to Order</button>
-                        </div>
-                        {/* Item 2 */}
-                        <div className="group bg-surface-container-lowest p-6 rounded-lg transition-all hover:shadow-lg">
-                            <div className="aspect-square mb-6 overflow-hidden rounded-lg relative">
-                                <div className="absolute inset-0 bg-tertiary/10 mix-blend-multiply"></div>
-                                <img alt="Matcha Glaze" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr0RiIRCsH-Cr0W1Kzc9RjQpU4mCyVWmU9qe0xo71NyeyVv5dCn4IQ8LWuvfjHp68hmGsAyxW3052UUWAo1lfgGhC5fni5ZaGFQPozhc94TBgcgH8v26Uo4CkOsncJYXlNa22OH10QMOSq7UIfUKjJxygo6UZfRHNo2GGHZ2wJEwZLRy6L4PgM1pdstXl6ceJdOscGhAyj820ef-g36NLwY0FdWOYZskCqD_V-yHai9UivwWwSw-xV7IR-YymneOVcI2f0AZByMsWt" />
-                            </div>
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold text-primary">Glaze Series: Matcha</h3>
-                                <span className="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">$5.25</span>
-                            </div>
-                            <p className="text-on-surface-variant text-sm mb-6">Premium Uji Matcha glaze balanced with a hint of sea salt.</p>
-                            <button className="w-full py-3 border border-outline-variant rounded-xl text-primary font-bold hover:bg-primary hover:text-on-primary transition-all active:scale-95">Add to Order</button>
-                        </div>
-                        {/* Item 3 */}
-                        <div className="group bg-surface-container-lowest p-6 rounded-lg transition-all hover:shadow-lg">
-                            <div className="aspect-square mb-6 overflow-hidden rounded-lg relative">
-                                <div className="absolute inset-0 bg-secondary/10 mix-blend-multiply"></div>
-                                <img alt="Strawberry Mochi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDR6m1LOmxmAHwvmxMSHozfoFdiHjwRC9_BhZKX1A0WGXM9NtwNcNLBgkzWYbdcQqw-xCuIrhjZhDYIDPrAvooZUlqFDM92SRc6kGliCfcC1WPEkOyYjCxlrM4zxOGArffFme_RlY2ij1KnLMEF-LRVrx8tDhFuNzXasi5mpo5icY1w9l93c39221-F1z5cdoOuNzMs8xFntYbowdR-UeigvHLWpKxTZXc88W1yU--JH3mPj7efl8MPEwd_z3mXLvc70aF7Wty3T0Ig" />
-                            </div>
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold text-primary">Mochi Series: Strawberry</h3>
-                                <span className="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">$5.50</span>
-                            </div>
-                            <p className="text-on-surface-variant text-sm mb-6">The signature chewy 'pon-de-ring' texture with fresh berry glaze.</p>
-                            <button className="w-full py-3 border border-outline-variant rounded-xl text-primary font-bold hover:bg-primary hover:text-on-primary transition-all active:scale-95">Add to Order</button>
-                        </div>
+                        ) : (
+                            filteredProducts.map((product) =>{
+                                return(
+                                    <div key={product.id} className="group relative bg-surface-container-lowest rounded-[24px] p-3 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 border border-transparent hover:border-primary/10">
+                                        {/* Favorite Button Overlay */}
+                                        <button 
+                                            onClick={() => toggleFavorite(product.id)}
+                                            
+                                            className="absolute top-5 right-5 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-90"
+                                        >
+                                            <span className={`material-symbols-outlined text-[20px] transition-colors ${favorites.includes(product.id) ? 'fill-1 text-red-500' : 'text-on-surface-variant'}`}>
+                                                favorite
+                                            </span>
+                                        </button>
+
+                                        {/* Product Image */}
+                                        <div className="aspect-square mb-4 overflow-hidden rounded-[20px] bg-surface-container-low">
+                                            <img 
+                                                alt={product.nama} 
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+                                                src={product.gambar} 
+                                            />
+                                        </div>
+
+                                        {/* Product Info */}
+                                        <div className="px-1">
+                                            <div className="flex flex-col mb-3">
+                                                <h3 className="text-sm font-bold text-primary line-clamp-1 group-hover:text-secondary transition-colors">{product.nama}</h3>
+                                                <p className="text-[11px] text-on-surface-variant line-clamp-1 opacity-70 italic">{product.deskripsi}</p>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-base font-black text-primary">
+                                                    Rp {Number(product.harga).toLocaleString('id-ID')}
+                                                </span>
+                                                <button 
+                                                    onClick={() => handleAddProduct(product)}
+                                                    className="w-full py-2.5 bg-primary/10 text-primary hover:bg-primary hover:text-on-primary rounded-xl text-[11px] font-black transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-95"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">
+                                                        {product.tipe === 'paket' ? 'grid_view' : 'add_shopping_cart'}
+                                                    </span>
+                                                    {product.tipe === 'paket' ? 'Pilih Isi Box' : 'Tambah'}
+                                                </button>
+                                            </div>
+                                        </div>   
+                                    </div>
+                                    
+                                )
+                            })
+                        )}
                     </div>
                 </div>
             </section>
 
             {/* Order Section */}
-            <section className="py-24 px-8 bg-surface" id="order">
-                <div className="max-w-4xl mx-auto">
-                    <div className="bg-surface-container rounded-lg p-10 md:p-16 relative overflow-hidden">
-                        <div className="relative z-10">
-                            <h2 className="text-4xl font-bold text-primary mb-8 text-center">Complete Your Order</h2>
-                            <div className="mb-10 p-6 bg-surface-container-low rounded-lg">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="font-medium">1x Dollin Single Snow</span>
-                                    <span>$4.50</span>
-                                </div>
-                                <div className="border-t border-outline-variant/30 pt-4 flex justify-between items-center font-bold text-primary">
-                                    <span>Total</span>
-                                    <span>$4.50</span>
-                                </div>
+            <section className="py-24 px-8" id="order">
+                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    {/* KIRI: Daftar Belanja */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <h2 className="text-3xl font-black text-primary italic">Detail Pesanan</h2>
+                        {cart.length === 0 ? (
+                            <div className="p-10 bg-surface-container rounded-3xl text-center border-2 border-dashed border-on-surface-variant/20">
+                                <p className="text-on-surface-variant">Keranjang belanja masih kosong...</p>
                             </div>
-                            <form className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Full Name</label>
-                                        <input className="w-full p-4 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary/20 placeholder:text-outline-variant" placeholder="Your Name" type="text" />
+                        ) : (
+                            cart.map((item) => (
+                                <div key={item.uniqueId || item.id} className="bg-white p-5 rounded-3xl border border-on-surface-variant/10 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 group hover:shadow-md hover:border-primary/20 transition-all">
+                                    <div className="flex gap-4 items-center w-full">
+                                        <div className="flex-shrink-0 w-12 h-12 bg-primary/5 rounded-2xl text-primary font-black text-lg flex items-center justify-center">
+                                            {item.qty}x
+                                        </div>
+                                        
+                                        <div className="flex-1 flex gap-4 items-center">
+                                            {/* Thumbnail / Gambar Utama */}
+                                            <img src={item.gambar} alt={item.nama} className="w-14 h-14 md:w-16 md:h-16 rounded-xl object-cover shadow-sm bg-surface-container" />
+
+                                            <div className="flex flex-col justify-center py-1">
+                                                <h4 className="font-bold text-primary text-base md:text-lg leading-tight">{item.nama}</h4>
+                                                {item.type === 'paket' && (
+                                                    <div className="mt-2 flex flex-col gap-1.5">
+                                                        {/* Avatar Donat Kecil */}
+                                                        <div className="flex -space-x-2.5">
+                                                            {Array.from(new Set(item.contents)).slice(0, 5).map((id, index) => {
+                                                                const product = products.find(p => p.id === id);
+                                                                return product ? (
+                                                                    <img key={index} src={product.gambar} alt={product.nama} className="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover shadow-sm border-[1.5px] border-white" />
+                                                                ) : null;
+                                                            })}
+                                                            {new Set(item.contents).size > 5 && (
+                                                                <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-surface-container border-[1.5px] border-white flex items-center justify-center text-on-surface-variant font-bold text-[9px] shadow-sm z-10">
+                                                                    +{new Set(item.contents).size - 5}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {/* Keterangan Teks */}
+                                                        <p className="text-[11px] md:text-xs text-on-surface-variant italic leading-relaxed max-w-[220px] md:max-w-sm m-0">
+                                                            {renderContentsText(item.contents)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Phone Number</label>
-                                        <input className="w-full p-4 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary/20 placeholder:text-outline-variant" placeholder="+1 (555) 000-0000" type="tel" />
+
+                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-end border-t sm:border-none border-on-surface-variant/10 pt-4 sm:pt-0">
+                                        <span className="font-black text-primary text-lg">Rp {(item.harga * item.qty).toLocaleString('id-ID')}</span>
+                                        <button onClick={() => removeFromCart(item)} className="p-2.5 text-red-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-colors flex items-center justify-center border border-transparent hover:border-red-100">
+                                            <span className="material-symbols-outlined">delete</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Delivery Address</label>
-                                    <textarea className="w-full p-4 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary/20 placeholder:text-outline-variant" placeholder="Enter your full street address" rows="3"></textarea>
+                            ))
+                        )}
+                    </div>
+
+                    {/* KANAN: Form Pemesan */}
+                    <div className="bg-surface-container rounded-3xl p-8 h-fit sticky top-24">
+                        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Data Pengiriman</h2>
+                        <form className="space-y-4">
+                            {/* Input Nama, Telp, Alamat di sini */}
+                            <div className="pt-6 border-t-2 border-dashed border-on-surface-variant/20 mt-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <span className="text-on-surface-variant font-bold">Total Pembayaran</span>
+                                    <span className="text-2xl font-black text-primary">Rp {calculateTotal().toLocaleString('id-ID')}</span>
                                 </div>
-                                <div className="pt-6 flex flex-col gap-4">
-                                    <button className="w-full py-5 bg-primary text-on-primary rounded-xl font-bold text-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all" type="submit">
-                                        Proceed to Payment
-                                    </button>
-                                    <button className="w-full py-4 bg-tertiary text-on-tertiary rounded-xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all" type="button">
-                                        <span className="material-symbols-outlined">forum</span>
-                                        Chat with a Baker on WhatsApp
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                                <button className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black text-lg hover:-translate-y-1 transition-all shadow-xl shadow-primary/20 cursor-pointer">
+                                    Pesan Sekarang via WhatsApp
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>
+
+            {/* MODAL PEMBANGUN KOTAK */}
+            {configuringBox && (
+                <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300">
+                        {/* Header Modal */}
+                        <div className="p-6 border-b border-on-surface-variant/10 flex justify-between items-center bg-orange-50">
+                            <div>
+                                <h2 className="text-2xl font-bold text-primary">{configuringBox.nama}</h2>
+                                <p className="text-sm font-semibold text-on-surface-variant">
+                                    Pilih {configuringBox.jumlah_pilihan} donat favoritmu ({selectedBoxItems.length}/{configuringBox.jumlah_pilihan})
+                                </p>
+                            </div>
+                            <button onClick={() => setConfiguringBox(null)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        {/* List Donat yang tersedia untuk Paket ini */}
+                        <div className="p-6 max-h-[50vh] overflow-y-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {(configuringBox.package_items || []).map(item => (
+                                <div 
+                                    key={item.id} 
+                                    onClick={() => toggleItemInBox(item.id)}
+                                    className={`cursor-pointer group flex flex-col items-center p-3 rounded-2xl border-2 transition-all relative ${selectedBoxItems.filter(id => id === item.id).length > 0 ? 'border-primary bg-primary/5 shadow-md scale-105' : 'border-transparent bg-gray-50 hover:bg-gray-100'}`}
+                                >
+                                    <div className="relative">
+                                        <img src={item.gambar} className="w-20 h-20 rounded-full object-cover shadow-sm mb-2 group-hover:scale-110 transition-transform" />
+                                        {/* Counter per item */}
+                                        {selectedBoxItems.filter(id => id === item.id).length > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white animate-bounce-short">
+                                                {selectedBoxItems.filter(id => id === item.id).length}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] font-black text-center text-primary uppercase leading-tight">{item.nama}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Footer Modal */}
+                        <div className="p-6 bg-gray-50 border-t border-on-surface-variant/10 flex flex-col gap-4">
+                        {/* Progress Bar Mini */}
+                        <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                                <div 
+                                    className="bg-primary h-full transition-all duration-300" 
+                                    style={{ width: `${(selectedBoxItems.length / configuringBox.jumlah_pilihan) * 100}%` }}
+                                ></div>
+                        </div>
+
+                            <div className="flex justify-between items-center">
+                                <button onClick={() => setSelectedBoxItems([])} className="text-red-500 font-bold text-sm hover:underline">Reset Pilihan</button>
+                                <button 
+                                    disabled={selectedBoxItems.length !== configuringBox.jumlah_pilihan}
+                                    onClick={() => {
+                                        addToCart(configuringBox);
+                                    }}
+                                    className={`px-8 py-3 rounded-xl font-black text-sm transition-all shadow-lg ${selectedBoxItems.length === configuringBox.jumlah_pilihan ? 'bg-primary text-white hover:-translate-y-1' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                                >
+                                    Konfirmasi Isi Box
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Footer */}
             <footer className="w-full py-12 px-8 bg-[#dcd4c0] dark:bg-[#25211a] text-[#76543d] dark:text-[#fef6e7]" id="contact">
