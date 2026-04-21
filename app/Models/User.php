@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'branch_id',
     ];
 
     /**
@@ -46,5 +47,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function branch()
+    {
+        // Setiap user punya satu relasi ke tabel Branch
+        return $this->belongsTo(Branch::class);
     }
 }

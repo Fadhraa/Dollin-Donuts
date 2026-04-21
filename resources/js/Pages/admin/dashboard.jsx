@@ -3,12 +3,13 @@ import AdminNav from "../layouts/admin_nav";
 function Dashboard(props) {
     console.log(props);
     const user = props.auth.user;
+    const branch = props.auth.branch;
     return (
         <>
         <div className="relative bg-background text-on-background antialiased selection:bg-primary-container min-h-screen">
 
             <div className="p-8 max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-on-surface mb-1 tracking-wide">Dashboard Admin</h1>
+                <h1 className="text-4xl font-bold text-on-surface mb-1 tracking-wide">Dashboard Admin {user.branch.nama}</h1>
                 <p className="text-base text-on-surface mb-8">Selamat Datang, {user.name} silahkan pantau penjualan dan stok</p>
                 {/* content main */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">

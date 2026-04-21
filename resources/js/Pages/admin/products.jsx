@@ -335,7 +335,7 @@ function Products({ products = [], satuanProducts = [] }) {
                                             </td>
                                             <td className="px-6 py-4 text-center align-middle">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider ${product.is_active ? 'bg-primary/20 text-primary' : 'bg-on-surface-variant/20 text-on-surface-variant'}`}>
-                                                    {product.stok}
+                                                  {product.stocks?.[0]?.stock ?? 0}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center align-middle">

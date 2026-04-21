@@ -29,10 +29,22 @@ class Product extends Model
     public function packageItems()
     {
         return $this->belongsToMany(
-            Product::class, 
-            'package_items', 
-            'package_id', 
+            Product::class,
+            'package_items',
+            'package_id',
             'product_id'
         );
+    }
+    public function stocks()
+    {
+        // Relasi ke tabel branch_stocks
+        return $this->hasMany(BranchStock::class);
+    }
+
+    // Function helper untuk ambil stok di cabang tertentu
+    public function getStockInBranch($branchId)
+    {
+        $branchStock = $this->stocks()->where('branch_id', $branchId)->first();
+        return $branchStock ? $branchStock->stock : 0;
     }
 }

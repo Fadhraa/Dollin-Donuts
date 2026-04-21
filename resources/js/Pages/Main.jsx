@@ -4,15 +4,33 @@ import { useState } from 'react';
 export default function Welcome({ products = [] }) {
     const [activeTab, setActiveTab] = useState('Semua');
     const [activeType, setActiveType] = useState('satuan');
+    const [Branch, setBranch] = useState("Pilih Cabang");
     const [configuringBox, setConfiguringBox] = useState(null);
     const [selectedBoxItems, setSelectedBoxItems] = useState([]);
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
-    console.log(cart);
+    const [formData, setFormData] = useState({
+        nama: '',
+        nohp: '',
+        alamat: ''
+    });
 
+    console.log(cart);
+    const handleOrder = (e) => {
+        e.preventDefault();
+        const timestamp = Date.now().toString().slice(-4);
+        const idPesanan = `ORD-${Date.now().toString().slice(-6)}`;
+    
+        const data = {
+            id_pesanan: idPesanan,
+            ...formData,
+            cart: cart,
+            total: calculateTotal(),
+            tgl: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        };
+        console.log(data);
+    }
     const addToCart = (product) => {
-        
-   
         if (product.tipe === 'satuan') {
             const existingItem = cart.find(item => item.id === product.id && item.type === 'satuan');
             
@@ -214,6 +232,7 @@ export default function Welcome({ products = [] }) {
                             </button>
                         </div>
                     </div>
+                    
                     {/* Category Tabs */}
                     <div className="flex flex-wrap justify-center gap-3 mb-12">
                         <button onClick={() => setActiveTab('Semua')} className={`px-6 py-2 rounded-full ${activeTab === 'Semua' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-secondary-container'} transition-colors font-medium`}>Semua Varian</button>
@@ -347,20 +366,40 @@ export default function Welcome({ products = [] }) {
                     {/* KANAN: Form Pemesan */}
                     <div className="bg-surface-container rounded-3xl p-8 h-fit sticky top-24">
                         <h2 className="text-2xl font-bold text-primary mb-6 text-center">Data Pengiriman</h2>
-                        <form className="space-y-4">
+                        <form onSubmit={handleOrder} className="space-y-4">
                             {/* Input Nama, Telp, Alamat di sini */}
                             <div className="pt-6 border-t-2 border-dashed border-on-surface-variant/20 mt-6">
                                 <div>
                                     <label htmlFor="nama" className="block text-sm font-bold text-on-surface-variant mb-2">Nama Lengkap</label>
-                                    <input required type="text" id="nama" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan nama Anda" />
+                                    <input required
+                                        name="nama"
+                                        type="text"
+                                        id="nama"
+                                        onChange={(e) => setFormData({nama: e.target.value})}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
+                                        placeholder="Masukkan nama Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="nohp" className="block text-sm font-bold text-on-surface-variant mb-2">No. HP</label>
-                                    <input required type="number" id="nohp" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan No. HP Anda" />
+                                    <input 
+                                    required 
+                                    name="nohp" 
+                                    type="number" 
+                                    id="nohp" 
+                                    onChange={(e) => setFormData({nohp: e.target.value})}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
+                                    placeholder="Masukkan No. HP Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="alamat" className="block text-sm font-bold text-on-surface-variant mb-2">Alamat</label>
-                                    <input required type="text" id="alamat" className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" placeholder="Masukkan Alamat Anda" />
+                                    <input 
+                                    required 
+                                    name="alamat" 
+                                    type="text" 
+                                    id="alamat" 
+                                    onChange={(e) => setFormData({alamat: e.target.value})}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
+                                    placeholder="Masukkan Alamat Anda" />
                                 </div>
                                 <div className="flex justify-between items-center my-6">
                                     <span className="text-on-surface-variant font-bold">Total Pembayaran</span>

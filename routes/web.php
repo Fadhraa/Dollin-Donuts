@@ -6,8 +6,10 @@ use App\Http\Controllers\AuthController;
 use Inertia\Inertia;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\OrderController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::post('/order/submit', [OrderController::class, 'store'])->name('order.submit');
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 Route::post('/login', [AuthController::class, 'Login']);

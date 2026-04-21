@@ -4,15 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Models\Branch;
 use Inertia\Inertia;
+
 
 class LandingController extends Controller
 {
     public function index()
     {
-        $product = Product::with('packageItems')->where('is_active', true)->orderBy('created_at', 'desc')->get();
+        // Ambil produk BESERTA stok di semua cabang
+        $products = Product::with(['stocks', 'packageItems'])->where('is_active', true)->get();
+
+        // Ambil juga daftar cabang agar user bisa pilih di frontend
+        $branches = Branch::all();
+
         return Inertia::render('Main', [
-            'products' => $product,
+            'products' => $products,
+            'branches' => $branches
         ]);
     }
 }
