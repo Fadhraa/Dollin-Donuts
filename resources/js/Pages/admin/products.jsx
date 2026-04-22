@@ -8,6 +8,7 @@ function Products({ products = [], satuanProducts = [] }) {
     const [editId, setEditId] = useState(null);
     const [oldGambar, setOldGambar] = useState(null);
     const { data, setData, post, processing, errors, reset } = useForm({
+        _method: "post",
         nama: "",
         harga: "",
         stok: 0,

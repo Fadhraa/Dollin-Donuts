@@ -1,22 +1,23 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
-export default function Welcome({ products = [], branches =[] }) {
+export default function Welcome({ products = [], branches = [] }) {
     useEffect(() => {
-    const savedBranch = localStorage.getItem('selectedBranch');
-    if (savedBranch) {
-        setActiveBranch(JSON.parse(savedBranch));
-        setShowBranchModal(false);
-    }
-}, []);
+        const savedBranch = localStorage.getItem('selectedBranch');
+        if (savedBranch) {
+            setActiveBranch(JSON.parse(savedBranch));
+            setShowBranchModal(false);
+        }
+    }, []);
     const [activeTab, setActiveTab] = useState('Semua');
     const [activeType, setActiveType] = useState('satuan');
     const [activeBranch, setActiveBranch] = useState(null);
     const [showBranchModal, setShowBranchModal] = useState(true);
     const [showInfoModal, setShowInfoModal] = useState(false);
+    const [showWaModal, setShowWaModal] = useState(false);
     const [configuringBox, setConfiguringBox] = useState(null);
     const [selectedBoxItems, setSelectedBoxItems] = useState([]);
- 
+
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
     const [formData, setFormData] = useState({
@@ -29,10 +30,10 @@ export default function Welcome({ products = [], branches =[] }) {
         e.preventDefault();
         const timestamp = Date.now().toString().slice(-4);
         const idPesanan = `ORD-${Date.now().toString().slice(-6)}`;
-    
+
         const data = {
             id_pesanan: idPesanan,
-            
+
             ...formData,
             cart: cart,
             total: grandTotal,
@@ -45,13 +46,13 @@ export default function Welcome({ products = [], branches =[] }) {
         const maxStock = currentStockData ? currentStockData.stock : 0;
         if (product.tipe === 'satuan') {
             const existingItem = cart.find(item => item.id === product.id && item.type === 'satuan');
-            
+
             if (existingItem) {
-                setCart(cart.map(item => 
+                setCart(cart.map(item =>
                     item.id === product.id ? { ...item, qty: item.qty + 1 } : item
                 ));
             } else {
-                setCart([...cart, { 
+                setCart([...cart, {
                     id: product.id,
                     kode_produk: product.kode_produk,
                     nama: product.nama,
@@ -80,35 +81,35 @@ export default function Welcome({ products = [], branches =[] }) {
         }
 
     };
-    
+
     // Hitung secara langsung (variabel reaktif akan selalu ter-update jika cart berubah)
     const subTotal = cart.reduce((total, item) => total + (item.harga * item.qty), 0);
     const adminFee = subTotal * 0.01; // Web Fee 1%
     const grandTotal = subTotal + adminFee;
     const removeFromCart = (itemToRemove) => {
-    // Filter berdasarkan uniqueId agar jika ada 2 box yg sama, yang terhapus cuma satu
-    setCart(cart.filter(item => (item.uniqueId || item.id) !== (itemToRemove.uniqueId || itemToRemove.id)));
+        // Filter berdasarkan uniqueId agar jika ada 2 box yg sama, yang terhapus cuma satu
+        setCart(cart.filter(item => (item.uniqueId || item.id) !== (itemToRemove.uniqueId || itemToRemove.id)));
     };
 
     const renderContentsText = (contentIds) => {
-    if (!contentIds || contentIds.length === 0) return "";
-    
-    // Hitung kemunculan tiap donat
-    const counts = {};
-    contentIds.forEach(id => {
-        const product = products.find(p => p.id === id);
-        if (product) {
-            counts[product.nama] = (counts[product.nama] || 0) + 1;
-        }
-    });
-    // Ubah jadi teks: "2x Choco, 1x Matcha"
-    return Object.entries(counts)
-        .map(([nama, qty]) => `${qty}x ${nama}`)
-        .join(", ");
+        if (!contentIds || contentIds.length === 0) return "";
+
+        // Hitung kemunculan tiap donat
+        const counts = {};
+        contentIds.forEach(id => {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                counts[product.nama] = (counts[product.nama] || 0) + 1;
+            }
+        });
+        // Ubah jadi teks: "2x Choco, 1x Matcha"
+        return Object.entries(counts)
+            .map(([nama, qty]) => `${qty}x ${nama}`)
+            .join(", ");
     };
 
     const toggleFavorite = (id) => {
-        setFavorites(prev => 
+        setFavorites(prev =>
             prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
         );
     };
@@ -116,7 +117,7 @@ export default function Welcome({ products = [], branches =[] }) {
     const handleAddProduct = (product) => {
         if (product.tipe === 'satuan') {
             // Placeholder untuk keranjang satuan
-           
+
             addToCart(product);
         } else {
             setConfiguringBox(product);
@@ -131,14 +132,14 @@ export default function Welcome({ products = [], branches =[] }) {
             alert("Kotak sudah penuh!");
         }
     };
-    
+
     const filteredProducts = products.filter((product) => {
         const matchType = product.tipe === activeType;
         const matchCategory = activeTab === 'Semua' || product.kategori === activeTab;
         return matchType && matchCategory;
     });
- 
-    if(activeTab === 'all'){
+
+    if (activeTab === 'all') {
         products.map((product) => {
             console.log(product.nama);
         })
@@ -172,9 +173,9 @@ export default function Welcome({ products = [], branches =[] }) {
                             <span className='text-xs font-bold text-on-surface-variant tracking-widest'>LOKASI PENGAMBILAN: </span>
                             <h3 className='text-lg font-bold text-primary'>{activeBranch?.nama || 'Pilih Outlet'}</h3>
                         </div>
-                            
-                        
-                        <button 
+
+
+                        <button
                             onClick={() => setShowBranchModal(true)}
                             className="ml-2 py-1 text-xs font-bold text-on-surface-variant hover:text-primary underline decoration-dotted underline-offset-4 transition-colors"
                         >
@@ -220,7 +221,7 @@ export default function Welcome({ products = [], branches =[] }) {
                                 </button>
                             ))}
                         </div>
-                        
+
                         <p className="text-center text-[10px] text-on-surface-variant mt-8 uppercase tracking-widest font-bold">
                             Freshly Baked Every Day
                         </p>
@@ -234,10 +235,10 @@ export default function Welcome({ products = [], branches =[] }) {
                     <div className="z-10">
                         <span className="inline-block px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-sm font-semibold mb-6">Feeling Fluffy</span>
                         <h1 className="text-6xl md:text-7xl font-extrabold text-primary leading-[1.1] mb-6 tracking-tight">
-                            Artisanal <br /> <span className="text-secondary">Dollin Donuts</span>
+                            <span className="text-secondary">Dollin Donuts</span>
                         </h1>
                         <p className="text-lg text-on-surface-variant max-w-md mb-10 leading-relaxed">
-                            Hand-crafted daily with premium grains and silky glazes. Experience the soft, doughy texture of the legendary Digital Pâtisserie.
+                            BECAUSE FLUFFY IS A FEELING
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <a className="px-8 py-4 bg-primary text-on-primary rounded-xl font-bold text-lg hover:opacity-90 transition-all flex items-center gap-2" href="#menu">
@@ -258,12 +259,12 @@ export default function Welcome({ products = [], branches =[] }) {
                     </div>
                 </div>
             </section>
-                
+
             {/* Menu Section */}
             <section className="py-24 px-8 bg-surface-container-low" id="menu">
-           
+
                 <div className="max-w-7xl mx-auto">
-                   <div className="text-center mb-8">
+                    <div className="text-center mb-8">
                         <h2 className='text-4xl font-bold text-primary mb-4'>Our Signature Selection</h2>
                         <p className="text-on-surface-variant font-medium">The finest textures from our bakery to your doorstep.</p>
                     </div>
@@ -273,14 +274,14 @@ export default function Welcome({ products = [], branches =[] }) {
                         <h3 className='text-sm font-black text-primary/60 mb-4 text-center uppercase tracking-widest'>
                             Pilih Pengalaman Belanja
                         </h3>
-                        
+
                         <div className='relative bg-surface-container p-1.5 rounded-2xl flex items-center shadow-inner group'>
                             {/* Latar Belakang Melayang (Animasi) */}
-                            <div 
+                            <div
                                 className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl shadow-lg transition-all duration-500 ease-out z-0 ${activeType === 'paket' ? 'translate-x-[100%]' : 'translate-x-0'}`}
                             ></div>
 
-                            <button 
+                            <button
                                 onClick={() => setActiveType('satuan')}
                                 className={`relative z-10 flex-1 py-3.5 rounded-xl font-black text-sm transition-colors duration-300 flex items-center justify-center gap-2 ${activeType === 'satuan' ? 'text-on-primary' : 'text-on-surface-variant hover:text-primary'}`}
                             >
@@ -288,7 +289,7 @@ export default function Welcome({ products = [], branches =[] }) {
                                 Beli Satuan
                             </button>
 
-                            <button 
+                            <button
                                 onClick={() => setActiveType('paket')}
                                 className={`relative z-10 flex-1 py-3.5 rounded-xl font-black text-sm transition-colors duration-300 flex items-center justify-center gap-2 ${activeType === 'paket' ? 'text-on-primary' : 'text-on-surface-variant hover:text-primary'}`}
                             >
@@ -297,7 +298,7 @@ export default function Welcome({ products = [], branches =[] }) {
                             </button>
                         </div>
                     </div>
-                    
+
                     {/* Category Tabs */}
                     <div className="flex flex-wrap justify-center gap-3 mb-12">
                         <button onClick={() => setActiveTab('Semua')} className={`px-6 py-2 rounded-full ${activeTab === 'Semua' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-secondary-container'} transition-colors font-medium`}>Semua Varian</button>
@@ -313,15 +314,15 @@ export default function Welcome({ products = [], branches =[] }) {
                                 <p className="text-on-surface-variant">Tidak ada produk</p>
                             </div>
                         ) : (
-                            filteredProducts.map((product) =>{
+                            filteredProducts.map((product) => {
                                 const currentStockData = product.stocks?.find((stock) => stock.branch_id === activeBranch?.id);
                                 const currentStock = currentStockData ? currentStockData.stock : 0;
-                                return(
+                                return (
                                     <div key={product.id} className="group relative bg-surface-container-lowest rounded-[24px] p-3 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 border border-transparent hover:border-primary/10">
                                         {/* Favorite Button Overlay */}
-                                        <button 
+                                        <button
                                             onClick={() => toggleFavorite(product.id)}
-                                            
+
                                             className="absolute top-5 right-5 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-90"
                                         >
                                             <span className={`material-symbols-outlined text-[20px] transition-colors ${favorites.includes(product.id) ? 'fill-1 text-red-500' : 'text-on-surface-variant'}`}>
@@ -331,10 +332,10 @@ export default function Welcome({ products = [], branches =[] }) {
 
                                         {/* Product Image */}
                                         <div className="aspect-square mb-4 overflow-hidden rounded-[20px] bg-surface-container-low">
-                                            <img 
-                                                alt={product.nama} 
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
-                                                src={product.gambar} 
+                                            <img
+                                                alt={product.nama}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                                                src={product.gambar}
                                             />
                                         </div>
 
@@ -345,15 +346,14 @@ export default function Welcome({ products = [], branches =[] }) {
                                                     <h3 className="text-sm font-bold text-primary line-clamp-1 group-hover:text-secondary transition-colors">
                                                         {product.nama}
                                                     </h3>
-                                                    
+
                                                     {/* Badge Stok Responsif */}
-                                                    <span className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-black tracking-wider rounded-full uppercase ${
-                                                        currentStock === 0 
+                                                    <span className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-black tracking-wider rounded-full uppercase ${currentStock === 0
                                                         ? 'bg-red-100 text-red-500' // Merah kalau habis
-                                                        : currentStock <= 10 
-                                                        ? 'bg-orange-100 text-orange-600 animate-pulse' // Orange kedap-kedip kalau mau habis (FOMO)
-                                                        : 'bg-primary/15 text-primary' // Warna normal kalau stok banyak
-                                                    }`}>
+                                                        : currentStock <= 10
+                                                            ? 'bg-orange-100 text-orange-600 animate-pulse' // Orange kedap-kedip kalau mau habis (FOMO)
+                                                            : 'bg-primary/15 text-primary' // Warna normal kalau stok banyak
+                                                        }`}>
                                                         {currentStock === 0 ? 'SOLD OUT' : `Sisa ${currentStock}`}
                                                     </span>
                                                 </div>
@@ -364,7 +364,7 @@ export default function Welcome({ products = [], branches =[] }) {
                                                 <span className="text-base font-black text-primary">
                                                     Rp {Number(product.harga).toLocaleString('id-ID')}
                                                 </span>
-                                                <button 
+                                                <button
                                                     onClick={() => handleAddProduct(product)}
                                                     className="w-full py-2.5 bg-primary/10 text-primary hover:bg-primary hover:text-on-primary rounded-xl text-[11px] font-black transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-95"
                                                 >
@@ -374,9 +374,9 @@ export default function Welcome({ products = [], branches =[] }) {
                                                     {product.tipe === 'paket' ? 'Pilih Isi Box' : 'Tambah'}
                                                 </button>
                                             </div>
-                                        </div>   
+                                        </div>
                                     </div>
-                                    
+
                                 )
                             })
                         )}
@@ -401,7 +401,7 @@ export default function Welcome({ products = [], branches =[] }) {
                                         <div className="flex-shrink-0 w-12 h-12 bg-primary/5 rounded-2xl text-primary font-black text-lg flex items-center justify-center">
                                             {item.qty}x
                                         </div>
-                                        
+
                                         <div className="flex-1 flex gap-4 items-center">
                                             {/* Thumbnail / Gambar Utama */}
                                             <img src={item.gambar} alt={item.nama} className="w-14 h-14 md:w-16 md:h-16 rounded-xl object-cover shadow-sm bg-surface-container" />
@@ -457,45 +457,45 @@ export default function Welcome({ products = [], branches =[] }) {
                                         name="nama"
                                         type="text"
                                         id="nama"
-                                        onChange={(e) => setFormData({nama: e.target.value})}
+                                        onChange={(e) => setFormData({ nama: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
                                         placeholder="Masukkan nama Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="nohp" className="block text-sm font-bold text-on-surface-variant mb-2">No. HP</label>
-                                    <input 
-                                    required 
-                                    name="nohp" 
-                                    type="number" 
-                                    id="nohp" 
-                                    onChange={(e) => setFormData({nohp: e.target.value})}
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
-                                    placeholder="Masukkan No. HP Anda" />
+                                    <input
+                                        required
+                                        name="nohp"
+                                        type="number"
+                                        id="nohp"
+                                        onChange={(e) => setFormData({ nohp: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
+                                        placeholder="Masukkan No. HP Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="alamat" className="block text-sm font-bold text-on-surface-variant mb-2">Alamat</label>
-                                    <input 
-                                    required 
-                                    name="alamat" 
-                                    type="text" 
-                                    id="alamat" 
-                                    onChange={(e) => setFormData({alamat: e.target.value})}
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
-                                    placeholder="Masukkan Alamat Anda" />
+                                    <input
+                                        required
+                                        name="alamat"
+                                        type="text"
+                                        id="alamat"
+                                        onChange={(e) => setFormData({ alamat: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
+                                        placeholder="Masukkan Alamat Anda" />
                                 </div>
                                 {/* Rincian Pembayaran */}
                                 <div className="bg-surface-container-low p-4 rounded-xl mt-4 mb-6 border border-on-surface-variant/10">
                                     <h3 className="text-sm font-bold text-on-surface-variant mb-3 uppercase tracking-wider">Rincian Harga</h3>
                                     <div className="flex flex-col gap-2 mb-3 pb-3 border-b border-on-surface-variant/20">
-                                    {
-                                        cart.map((item, index) => (
-                                            <div key={index} className="flex justify-between items-center text-sm">
-                                                <span className="text-on-surface line-clamp-1 pr-4">{item.qty}x {item.nama}</span>
-                                                <span className="text-on-surface font-medium whitespace-nowrap">Rp {(item.harga * item.qty).toLocaleString('id-ID')}</span>
-                                            </div>
-                                        ))
-                                        
-                                    }
+                                        {
+                                            cart.map((item, index) => (
+                                                <div key={index} className="flex justify-between items-center text-sm">
+                                                    <span className="text-on-surface line-clamp-1 pr-4">{item.qty}x {item.nama}</span>
+                                                    <span className="text-on-surface font-medium whitespace-nowrap">Rp {(item.harga * item.qty).toLocaleString('id-ID')}</span>
+                                                </div>
+                                            ))
+
+                                        }
                                     </div>
                                     <div className="flex justify-between items-center text-sm font-medium text-on-surface-variant">
                                         <span>Biaya Pemeliharaan (1%)</span>
@@ -535,8 +535,8 @@ export default function Welcome({ products = [], branches =[] }) {
                         {/* List Donat yang tersedia untuk Paket ini */}
                         <div className="p-6 max-h-[50vh] overflow-y-auto grid grid-cols-2 md:grid-cols-4 gap-4">
                             {(configuringBox.package_items || []).map(item => (
-                                <div 
-                                    key={item.id} 
+                                <div
+                                    key={item.id}
                                     onClick={() => toggleItemInBox(item.id)}
                                     className={`cursor-pointer group flex flex-col items-center p-3 rounded-2xl border-2 transition-all relative ${selectedBoxItems.filter(id => id === item.id).length > 0 ? 'border-primary bg-primary/5 shadow-md scale-105' : 'border-transparent bg-gray-50 hover:bg-gray-100'}`}
                                 >
@@ -556,17 +556,17 @@ export default function Welcome({ products = [], branches =[] }) {
 
                         {/* Footer Modal */}
                         <div className="p-6 bg-gray-50 border-t border-on-surface-variant/10 flex flex-col gap-4">
-                        {/* Progress Bar Mini */}
-                        <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                                <div 
-                                    className="bg-primary h-full transition-all duration-300" 
+                            {/* Progress Bar Mini */}
+                            <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-primary h-full transition-all duration-300"
                                     style={{ width: `${(selectedBoxItems.length / configuringBox.jumlah_pilihan) * 100}%` }}
                                 ></div>
-                        </div>
+                            </div>
 
                             <div className="flex justify-between items-center">
                                 <button onClick={() => setSelectedBoxItems([])} className="text-red-500 font-bold text-sm hover:underline">Reset Pilihan</button>
-                                <button 
+                                <button
                                     disabled={selectedBoxItems.length !== configuringBox.jumlah_pilihan}
                                     onClick={() => {
                                         addToCart(configuringBox);
@@ -581,6 +581,32 @@ export default function Welcome({ products = [], branches =[] }) {
                 </div>
             )}
 
+            {/* MODAL PEMILIHAN WHATSAPP */}
+            {showWaModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 animate-in fade-in duration-300">
+                    <div className="bg-surface-container-highest max-w-sm w-full rounded-3xl p-8 shadow-2xl border border-white/20 transform animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+                                <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12.031 2C6.49 2 2 6.491 2 12.032c0 1.761.463 3.483 1.341 5.002L2 22l5.122-1.343a9.99 9.99 0 004.908 1.282h.004c5.539 0 10.038-4.493 10.038-10.036 0-2.685-1.045-5.21-2.943-7.108C17.227 2.894 14.71 1.848 12.035 1.848zm0 1.687c2.253 0 4.37.878 5.962 2.47a8.423 8.423 0 012.467 5.964c0 4.652-3.784 8.435-8.438 8.435h-.003c-1.503 0-2.977-.393-4.269-1.137l-.307-.179-3.17.83.844-3.093-.198-.313a8.383 8.383 0 01-1.28-4.544c0-4.654 3.785-8.436 8.441-8.436zm4.646 6.353c-.255-.128-1.506-.745-1.74-.83-.233-.086-.402-.128-.573.128-.17.255-.658.83-.807 1-.148.17-.297.192-.552.064-.255-.128-1.077-.397-2.05-1.264-.757-.674-1.268-1.506-1.416-1.762-.148-.255-.016-.393.111-.52.115-.115.255-.297.382-.446.128-.148.17-.255.255-.425.085-.17.043-.318-.021-.446-.064-.128-.574-1.383-.787-1.894-.207-.496-.418-.429-.573-.437-.148-.008-.319-.009-.489-.009-.17 0-.446.064-.68.319-.234.255-.893.873-.893 2.128 0 1.256.915 2.47 1.042 2.641.128.17 1.8 2.746 4.364 3.854.61.263 1.085.42 1.455.538.613.195 1.17.168 1.611.101.492-.074 1.507-.616 1.719-1.21.213-.594.213-1.104.149-1.21-.064-.106-.234-.17-.489-.297z" clipRule="evenodd" /></svg>
+                                Hubungi Kami
+                            </h3>
+                            <button onClick={() => setShowWaModal(false)} className="p-1 hover:bg-black/5 rounded-full transition-colors"><span className="material-symbols-outlined text-lg">close</span></button>
+                        </div>
+                        <p className="text-sm text-on-surface-variant mb-6 relative -top-2">Pilih salah satu nomor cabang di bawah ini.</p>
+                        <div className="flex flex-col gap-3">
+                            <a href="https://wa.me/6285123793693" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface-container-low hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all font-bold text-on-surface hover:text-primary">
+                                <span>WhatsApp 1</span>
+                                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                            </a>
+                            <a href="https://wa.me/6285126683156" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface-container-low hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all font-bold text-on-surface hover:text-primary">
+                                <span>WhatsApp 2</span>
+                                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Footer */}
             <footer className="w-full py-12 px-8 bg-[#dcd4c0] dark:bg-[#25211a] text-[#76543d] dark:text-[#fef6e7]" id="contact">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-center md:text-left">
@@ -588,10 +614,22 @@ export default function Welcome({ products = [], branches =[] }) {
                         <span className="text-lg font-bold text-[#76543d] brand-font">Dollin Donuts</span>
                         <p className="text-xs uppercase tracking-widest mt-2">Feeling Fluffy.</p>
                     </div>
-                    <div className="flex justify-center gap-6">
-                        <a className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] underline decoration-2 underline-offset-4 text-xs uppercase tracking-widest" href="#">Instagram</a>
-                        <a className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] underline decoration-2 underline-offset-4 text-xs uppercase tracking-widest" href="#">Facebook</a>
-                        <a className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] underline decoration-2 underline-offset-4 text-xs uppercase tracking-widest" href="#">Twitter</a>
+                    <div className="flex justify-center gap-6 items-center">
+                        <a className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] transition-colors" href="https://www.instagram.com/dollin.donuts?igsh=ZnJub282NGR1emUy" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
+                            </svg>
+                        </a>
+                        <button onClick={() => setShowWaModal(true)} className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] transition-colors" aria-label="WhatsApp">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fillRule="evenodd" d="M12.031 2C6.49 2 2 6.491 2 12.032c0 1.761.463 3.483 1.341 5.002L2 22l5.122-1.343a9.99 9.99 0 004.908 1.282h.004c5.539 0 10.038-4.493 10.038-10.036 0-2.685-1.045-5.21-2.943-7.108C17.227 2.894 14.71 1.848 12.035 1.848v.152zm0 1.687c2.253 0 4.37.878 5.962 2.47a8.423 8.423 0 012.467 5.964c0 4.652-3.784 8.435-8.438 8.435h-.003c-1.503 0-2.977-.393-4.269-1.137l-.307-.179-3.17.83.844-3.093-.198-.313a8.383 8.383 0 01-1.28-4.544c0-4.654 3.785-8.436 8.441-8.436zm4.646 6.353c-.255-.128-1.506-.745-1.74-.83-.233-.086-.402-.128-.573.128-.17.255-.658.83-.807 1-.148.17-.297.192-.552.064-.255-.128-1.077-.397-2.05-1.264-.757-.674-1.268-1.506-1.416-1.762-.148-.255-.016-.393.111-.52.115-.115.255-.297.382-.446.128-.148.17-.255.255-.425.085-.17.043-.318-.021-.446-.064-.128-.574-1.383-.787-1.894-.207-.496-.418-.429-.573-.437-.148-.008-.319-.009-.489-.009-.17 0-.446.064-.68.319-.234.255-.893.873-.893 2.128 0 1.256.915 2.47 1.042 2.641.128.17 1.8 2.746 4.364 3.854.61.263 1.085.42 1.455.538.613.195 1.17.168 1.611.101.492-.074 1.507-.616 1.719-1.21.213-.594.213-1.104.149-1.21-.064-.106-.234-.17-.489-.297z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                        <a className="text-[#76543d]/60 dark:text-[#dcd4c0]/60 hover:text-[#76543d] dark:hover:text-[#fef6e7] transition-colors" href="https://www.tiktok.com/@dollin.donuts?_r=1&_t=ZS-95jzkCV7I2O" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                            <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 448 512" aria-hidden="true">
+                                <path d="M448 209.91a210.06 210.06 0 01-122.77-39.25v178.72A162.55 162.55 0 11185 188.31v89.89a74.62 74.62 0 1052.23 71.18V0h88a121.18 121.18 0 001.86 22.17A122.18 122.18 0 00381 102.39a121.43 121.43 0 0067 20.14z"/>
+                            </svg>
+                        </a>
                     </div>
                     <div className="md:text-right">
                         <p className="text-xs font-semibold">© 2026 Dollin Donuts. All rights reserved.</p>
