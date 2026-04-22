@@ -7,7 +7,6 @@ function Dashboard(props) {
     return (
         <>
         <div className="relative bg-background text-on-background antialiased selection:bg-primary-container min-h-screen">
-
             <div className="p-8 max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-on-surface mb-1 tracking-wide">Dashboard Admin {user.branch.nama}</h1>
                 <p className="text-base text-on-surface mb-8">Selamat Datang, {user.name} silahkan pantau penjualan dan stok</p>

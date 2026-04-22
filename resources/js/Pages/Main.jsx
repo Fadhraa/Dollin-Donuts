@@ -1,12 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Welcome({ products = [] }) {
+export default function Welcome({ products = [], branches =[] }) {
+    useEffect(() => {
+    const savedBranch = localStorage.getItem('selectedBranch');
+    if (savedBranch) {
+        setActiveBranch(JSON.parse(savedBranch));
+        setShowBranchModal(false);
+    }
+}, []);
     const [activeTab, setActiveTab] = useState('Semua');
     const [activeType, setActiveType] = useState('satuan');
-    const [Branch, setBranch] = useState("Pilih Cabang");
+    const [activeBranch, setActiveBranch] = useState(null);
+    const [showBranchModal, setShowBranchModal] = useState(true);
+    const [showInfoModal, setShowInfoModal] = useState(false);
     const [configuringBox, setConfiguringBox] = useState(null);
     const [selectedBoxItems, setSelectedBoxItems] = useState([]);
+ 
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
     const [formData, setFormData] = useState({
@@ -15,7 +25,6 @@ export default function Welcome({ products = [] }) {
         alamat: ''
     });
 
-    console.log(cart);
     const handleOrder = (e) => {
         e.preventDefault();
         const timestamp = Date.now().toString().slice(-4);
@@ -23,14 +32,17 @@ export default function Welcome({ products = [] }) {
     
         const data = {
             id_pesanan: idPesanan,
+            
             ...formData,
             cart: cart,
-            total: calculateTotal(),
+            total: grandTotal,
             tgl: new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
         console.log(data);
     }
     const addToCart = (product) => {
+        const currentStockData = product.stocks?.find((stock) => stock.branch_id === activeBranch?.id);
+        const maxStock = currentStockData ? currentStockData.stock : 0;
         if (product.tipe === 'satuan') {
             const existingItem = cart.find(item => item.id === product.id && item.type === 'satuan');
             
@@ -68,10 +80,11 @@ export default function Welcome({ products = [] }) {
         }
 
     };
-
-    const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.harga * item.qty, 0);
-    };
+    
+    // Hitung secara langsung (variabel reaktif akan selalu ter-update jika cart berubah)
+    const subTotal = cart.reduce((total, item) => total + (item.harga * item.qty), 0);
+    const adminFee = subTotal * 0.01; // Web Fee 1%
+    const grandTotal = subTotal + adminFee;
     const removeFromCart = (itemToRemove) => {
     // Filter berdasarkan uniqueId agar jika ada 2 box yg sama, yang terhapus cuma satu
     setCart(cart.filter(item => (item.uniqueId || item.id) !== (itemToRemove.uniqueId || itemToRemove.id)));
@@ -118,7 +131,7 @@ export default function Welcome({ products = [] }) {
             alert("Kotak sudah penuh!");
         }
     };
-
+    
     const filteredProducts = products.filter((product) => {
         const matchType = product.tipe === activeType;
         const matchCategory = activeTab === 'Semua' || product.kategori === activeTab;
@@ -147,21 +160,73 @@ export default function Welcome({ products = [] }) {
             {/* TopNavBar */}
             <nav className="fixed top-0 w-full z-50 bg-[#fef6e7]/80 dark:bg-[#322e25]/80 backdrop-blur-xl shadow-sm dark:shadow-none">
                 <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-                    <span className="text-2xl font-bold tracking-tight text-[#76543d] dark:text-[#fef6e7] brand-font">The Artisan Pâtisserie</span>
+                    <span className="text-2xl font-bold tracking-tight text-[#76543d] dark:text-[#fef6e7] brand-font">Dollin Donuts</span>
                     <div className="hidden md:flex items-center gap-8">
                         <a className="text-[#76543d] font-bold border-b-2 border-[#76543d] pb-1 body-md transition-opacity duration-300" href="#menu">Menu</a>
                         <a className="text-[#76543d]/70 dark:text-[#dcd4c0]/70 hover:text-[#76543d] body-md transition-opacity duration-300" href="#order">Order Now</a>
                         <a className="text-[#76543d]/70 dark:text-[#dcd4c0]/70 hover:text-[#76543d] body-md transition-opacity duration-300" href="#contact">Contact</a>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-end gap-4">
                         {/* Tombol Login/Dashboard yang terhubung ke sistem */}
-                        <Link href="/login" className="text-[#76543d] font-bold hover:opacity-80">Login</Link>
-                        <button className="hover:opacity-80 transition-opacity duration-300 active:scale-95 duration-200">
-                            <span className="material-symbols-outlined text-[#76543d] dark:text-[#dcd4c0]">shopping_bag</span>
+                        <div>
+                            <span className='text-xs font-bold text-on-surface-variant tracking-widest'>LOKASI PENGAMBILAN: </span>
+                            <h3 className='text-lg font-bold text-primary'>{activeBranch?.nama || 'Pilih Outlet'}</h3>
+                        </div>
+                            
+                        
+                        <button 
+                            onClick={() => setShowBranchModal(true)}
+                            className="ml-2 py-1 text-xs font-bold text-on-surface-variant hover:text-primary underline decoration-dotted underline-offset-4 transition-colors"
+                        >
+                            Ganti
                         </button>
                     </div>
                 </div>
             </nav>
+            {/* Modal information */}
+
+            {/* Modal Pilih Cabang (Muncul Otomatis) */}
+            {showBranchModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 animate-in fade-in duration-300">
+                    <div className="bg-surface-container-highest max-w-md w-full rounded-3xl p-8 shadow-2xl border border-white/20 transform animate-in zoom-in-95 duration-300">
+                        <div className="text-center mb-8">
+                            <div className="bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="material-symbols-rounded text-primary text-3xl">location</span>
+                            </div>
+                            <h2 className="text-2xl font-bold text-on-surface">Pilih Outlet Dollin</h2>
+                            <p className="text-on-surface-variant mt-2 text-sm">
+                                Silahkan pilih outlet terdekat untuk melihat ketersediaan stok donat favoritmu.
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {branches.map((branch) => (
+                                <button
+                                    key={branch.id}
+                                    onClick={() => {
+                                        setActiveBranch(branch);
+                                        console.log(branch);
+                                        setShowBranchModal(false);
+                                        // Simpan pilihan ke localStorage agar tidak tanya terus saat refresh
+                                        localStorage.setItem('selectedBranch', JSON.stringify(branch));
+                                    }}
+                                    className="w-full flex items-center p-4 rounded-2xl bg-surface-container-low hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all group text-left"
+                                >
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors">{branch.nama}</h3>
+                                        <p className="text-xs text-on-surface-variant line-clamp-1">{branch.alamat}</p>
+                                    </div>
+                                    <span className="material-symbols-rounded text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <p className="text-center text-[10px] text-on-surface-variant mt-8 uppercase tracking-widest font-bold">
+                            Freshly Baked Every Day
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 px-8 overflow-hidden">
@@ -198,9 +263,9 @@ export default function Welcome({ products = [] }) {
             <section className="py-24 px-8 bg-surface-container-low" id="menu">
            
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-8">
-                        <h2 className="text-4xl font-bold text-primary mb-4">Our Signature Selection</h2>
-                        <p className="text-on-surface-variant">The finest textures from our bakery to your doorstep.</p>
+                   <div className="text-center mb-8">
+                        <h2 className='text-4xl font-bold text-primary mb-4'>Our Signature Selection</h2>
+                        <p className="text-on-surface-variant font-medium">The finest textures from our bakery to your doorstep.</p>
                     </div>
                     {/* Satuan dan Paketan */}
 
@@ -249,6 +314,8 @@ export default function Welcome({ products = [] }) {
                             </div>
                         ) : (
                             filteredProducts.map((product) =>{
+                                const currentStockData = product.stocks?.find((stock) => stock.branch_id === activeBranch?.id);
+                                const currentStock = currentStockData ? currentStockData.stock : 0;
                                 return(
                                     <div key={product.id} className="group relative bg-surface-container-lowest rounded-[24px] p-3 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 border border-transparent hover:border-primary/10">
                                         {/* Favorite Button Overlay */}
@@ -274,7 +341,22 @@ export default function Welcome({ products = [] }) {
                                         {/* Product Info */}
                                         <div className="px-1">
                                             <div className="flex flex-col mb-3">
-                                                <h3 className="text-sm font-bold text-primary line-clamp-1 group-hover:text-secondary transition-colors">{product.nama}</h3>
+                                                <div className="flex justify-between items-center gap-2 mb-2">
+                                                    <h3 className="text-sm font-bold text-primary line-clamp-1 group-hover:text-secondary transition-colors">
+                                                        {product.nama}
+                                                    </h3>
+                                                    
+                                                    {/* Badge Stok Responsif */}
+                                                    <span className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-black tracking-wider rounded-full uppercase ${
+                                                        currentStock === 0 
+                                                        ? 'bg-red-100 text-red-500' // Merah kalau habis
+                                                        : currentStock <= 10 
+                                                        ? 'bg-orange-100 text-orange-600 animate-pulse' // Orange kedap-kedip kalau mau habis (FOMO)
+                                                        : 'bg-primary/15 text-primary' // Warna normal kalau stok banyak
+                                                    }`}>
+                                                        {currentStock === 0 ? 'SOLD OUT' : `Sisa ${currentStock}`}
+                                                    </span>
+                                                </div>
                                                 <p className="text-[11px] text-on-surface-variant line-clamp-1 opacity-70 italic">{product.deskripsi}</p>
                                             </div>
 
@@ -401,9 +483,28 @@ export default function Welcome({ products = [] }) {
                                     className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
                                     placeholder="Masukkan Alamat Anda" />
                                 </div>
+                                {/* Rincian Pembayaran */}
+                                <div className="bg-surface-container-low p-4 rounded-xl mt-4 mb-6 border border-on-surface-variant/10">
+                                    <h3 className="text-sm font-bold text-on-surface-variant mb-3 uppercase tracking-wider">Rincian Harga</h3>
+                                    <div className="flex flex-col gap-2 mb-3 pb-3 border-b border-on-surface-variant/20">
+                                    {
+                                        cart.map((item, index) => (
+                                            <div key={index} className="flex justify-between items-center text-sm">
+                                                <span className="text-on-surface line-clamp-1 pr-4">{item.qty}x {item.nama}</span>
+                                                <span className="text-on-surface font-medium whitespace-nowrap">Rp {(item.harga * item.qty).toLocaleString('id-ID')}</span>
+                                            </div>
+                                        ))
+                                        
+                                    }
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm font-medium text-on-surface-variant">
+                                        <span>Biaya Pemeliharaan (1%)</span>
+                                        <span>Rp {adminFee.toLocaleString('id-ID')}</span>
+                                    </div>
+                                </div>
                                 <div className="flex justify-between items-center my-6">
-                                    <span className="text-on-surface-variant font-bold">Total Pembayaran</span>
-                                    <span className="text-2xl font-black text-primary">Rp {calculateTotal().toLocaleString('id-ID')}</span>
+                                    <span className="text-on-surface font-bold text-xl">Total Pembayaran</span>
+                                    <span className="text-2xl font-black text-primary">Rp {grandTotal.toLocaleString('id-ID')}</span>
                                 </div>
                                 <button className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black text-lg hover:-translate-y-1 transition-all shadow-xl shadow-primary/20 cursor-pointer">
                                     Pesan Sekarang via WhatsApp
