@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 function Transaction({ transaction ={}, stats=[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+    const itemsPerPage = 5;
     const filteredTransaction = transaction.filter((item) =>{
         if (!searchQuery) return true
         const cari = searchQuery.toLowerCase()
