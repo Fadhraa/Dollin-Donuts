@@ -31,5 +31,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('zyvaratech123'),
             'role' => 'developer',
         ]);
+
+        $this->call([
+            BranchAndAdminSeeder::class,
+        ]);
     }
 }

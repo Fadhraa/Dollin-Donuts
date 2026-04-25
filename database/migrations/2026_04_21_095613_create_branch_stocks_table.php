@@ -21,4 +21,12 @@ return new class extends Migration
             $table->unique(['product_id', 'branch_id']);
         });
     }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('branch_stocks');
+    }
 };
