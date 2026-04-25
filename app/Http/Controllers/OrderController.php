@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -38,5 +38,102 @@ class OrderController extends Controller
             ]);
         }
         return redirect()->route('main')->with('success', 'Pesanan berhasil dibuat!');
+    }
+
+    public function cekPesanan(Request $request)
+    {
+        $request->validate([
+            'nohp' => 'required|string'
+        ]);
+
+        $orders = Order::with('branch')
+            ->where('nohp', $request->nohp)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'Pesanan tidak ditemukan dengan nomor HP tersebut.'], 404);
+        }
+
+        return response()->json(['status' => 'success', 'data' => $orders], 200);
+    }
+
+    public function management()
+    {
+        // Ambil data admin yang sedang login
+        $admin = Auth::user();
+
+        // 1. Tarik data pesanan 
+        $query = Order::with(['branch', 'items.product'])
+            ->orderBy('created_at', 'desc');
+
+        // Jika admin memiliki branch_id (bukan super admin pusat), filter datanya!
+        if ($admin && $admin->branch_id) {
+            $query->where('branch_id', $admin->branch_id);
+        }
+
+        $orders = $query->get();
+
+        // 2. Hitung statistik pesanan (Jangan lupa difilter juga agar angkanya akurat per cabang)
+        $statsQuery = Order::query();
+        if ($admin && $admin->branch_id) {
+            $statsQuery->where('branch_id', $admin->branch_id);
+        }
+
+        $stats = [
+            'pesanan_baru' => (clone $statsQuery)->where('order_status', 'Menunggu Konfirmasi')->count(),
+            'diproses' => (clone $statsQuery)->where('order_status', 'Diproses')->count(),
+            'selesai_hari_ini' => (clone $statsQuery)->where('order_status', 'Selesai')->whereDate('updated_at', today())->count(),
+        ];
+
+        return \Inertia\Inertia::render('admin/ordermanagement', [
+            'orders' => $orders,
+            'stats' => $stats
+        ]);
+    }
+
+
+    public function updateStatus(Request $request, $id)
+    {
+        // 1. Pastikan data yang dikirim ada isinya
+        $request->validate([
+            'status' => 'required|string'
+        ]);
+
+        // 2. Cari pesanan berdasarkan ID, lalu ubah statusnya
+        $order = Order::findOrFail($id);
+        $order->order_status = $request->status;
+        $order->save();
+
+        // 3. Kembalikan respons ke halaman (Inertia akan mereload data secara otomatis tanpa refresh)
+        return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui');
+    }
+
+    public function transaction()
+    {
+        $admin = Auth::user();
+        $query = Order::with('items.product')->orderBy('created_at', 'desc');
+        if ($admin && $admin->branch_id) {
+            $query->where('branch_id', $admin->branch_id);
+        }
+        $transaction = $query->get();
+
+        $statsQuery = Order::query();
+        if ($admin && $admin->branch_id) {
+            $statsQuery->where('branch_id', $admin->branch_id);
+        }
+        $stats = [
+            'pendapatan_hari_ini' => (clone $statsQuery)->whereIn('payment_status', ['success', 'settlement', 'capture'])
+                ->whereDate('updated_at', today())
+                ->sum('total'),
+            'jumlah_transaksi' => (clone $statsQuery)->count(),
+            'transaksi_selesai' => (clone $statsQuery)->where('payment_status', 'success')->count(),
+            'transaksi_dibatalkan' => (clone $statsQuery)->where('payment_status', 'failed')->count(),
+        ];
+
+        return \Inertia\Inertia::render('admin/transaction', [
+            'transaction' => $transaction,
+            'stats' => $stats
+        ]);
     }
 }

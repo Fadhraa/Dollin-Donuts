@@ -1,7 +1,26 @@
 import AdminNav from "../layouts/admin_nav";
 import { Head } from "@inertiajs/react";
+import {useState} from "react";
+import dayjs from "dayjs";
 
-function Transaction() {
+function Transaction({ transaction ={}, stats=[] }) {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    const filteredTransaction = transaction.filter((item) =>{
+        if (!searchQuery) return true
+        const cari = searchQuery.toLowerCase()
+        return (
+            item.id_pesanan.toLowerCase().includes(cari)
+            || item.nama.toLowerCase().includes(cari)
+        )
+    });
+     const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentTransactions = filteredTransaction.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredTransaction.length / itemsPerPage);
+    console.log(currentTransactions);
+    console.log(transaction);   
     return (
         <>
             <Head>
@@ -49,22 +68,18 @@ function Transaction() {
                             <span className="material-symbols-outlined text-primary" data-icon="payments">payments</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold font-headline text-primary">Rp 6.390.000</span>
-                            <span className="text-tertiary font-bold text-sm flex items-center">
-                                <span className="material-symbols-outlined text-sm" data-icon="arrow_upward">arrow_upward</span> 8.4%
-                            </span>
+                            <span className="text-4xl font-bold font-headline text-primary">Rp. {Number(stats.pendapatan_hari_ini).toLocaleString('id-ID')}</span>
+                          
                         </div>
                     </div>
                     <div className="bg-surface-container-low p-8 rounded-lg space-y-4 shadow-sm border border-outline-variant/10">
                         <div className="flex items-center justify-between">
-                            <span className="text-on-surface-variant font-medium uppercase tracking-wider text-xs">Jumlah Transaksi Berhasil</span>
-                            <span className="material-symbols-outlined text-primary" data-icon="receipt_long">receipt_long</span>
+                            <span className="text-on-tertiary-fixed-variant font-medium uppercase tracking-wider text-xs">Jumlah Transaksi Selesai</span>
+                            <span className="material-symbols-outlined text-on-tertiary-fixed-variant" data-icon="receipt_long">receipt_long</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold font-headline text-primary">142</span>
-                            <span className="text-tertiary font-bold text-sm flex items-center">
-                                <span className="material-symbols-outlined text-sm" data-icon="arrow_upward">arrow_upward</span> 12%
-                            </span>
+                            <span className="text-4xl font-bold font-headline text-on-tertiary-fixed-variant">{stats.transaksi_selesai}</span>
+                      
                         </div>
                     </div>
                 </section>
@@ -75,17 +90,17 @@ function Transaction() {
                     <div className="p-6 bg-surface-container/50 border-b border-outline-variant/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div className="relative flex-1 max-w-md">
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
-                            <input className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-full text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Cari berdasarkan ID, Pelanggan, atau Produk..." type="text" />
+                            <input 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-full text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Cari berdasarkan id pesanan..." type="text" />
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             <div className="flex items-center bg-surface-container-low rounded-full px-4 py-2 text-sm font-medium text-on-surface gap-2 border border-outline-variant/20">
                                 <span className="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
-                                24 Okt 2023 - Hari Ini
+                                {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </div>
-                            <div className="flex items-center bg-surface-container-low rounded-full px-4 py-2 text-sm font-medium text-on-surface gap-2 border border-outline-variant/20">
-                                <span className="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
-                                Metode Pembayaran
-                            </div>
+                   
                         </div>
                     </div>
 
@@ -96,117 +111,91 @@ function Transaction() {
                                 <tr className="bg-surface-container/30">
                                     <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline">Detail Transaksi</th>
                                     <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline text-center">Metode Transaksi</th>
-                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline">Tanggal & Waktu</th>
+                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline text-center">Tanggal & Waktu</th>
                                     <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline text-center">Status</th>
                                     <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 font-headline text-right">Jumlah Transaksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-outline-variant/10">
                                 {/* Row 1 */}
-                                <tr className="hover:bg-surface-container/10 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-primary mb-0.5">#TRX-98234</div>
-                                        <div className="text-on-surface-variant text-sm">2x Glaze Series, 1x Espresso</div>
-                                        <div className="text-[11px] text-outline mt-1 uppercase font-semibold">Annette Black</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
-                                            <span className="material-symbols-outlined text-[16px]" data-icon="qr_code_2">qr_code_2</span> QRIS
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-on-surface/80">24 Okt 2023, 10:45</td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Berhasil</span>
-                                    </td>
-                                    <td className="px-6 py-5 font-bold text-primary text-right">Rp 45.000</td>
-                                </tr>
-                                {/* Row 2 */}
-                                <tr className="hover:bg-surface-container/10 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-primary mb-0.5">#TRX-98235</div>
-                                        <div className="text-on-surface-variant text-sm">4x Mochi Series Mix</div>
-                                        <div className="text-[11px] text-outline mt-1 uppercase font-semibold">Arlene McCoy</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
-                                            <span className="material-symbols-outlined text-[16px]" data-icon="credit_card">credit_card</span> Kartu
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-on-surface/80">24 Okt 2023, 11:12</td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Berhasil</span>
-                                    </td>
-                                    <td className="px-6 py-5 font-bold text-primary text-right">Rp 120.000</td>
-                                </tr>
-                                {/* Row 3 */}
-                                <tr className="hover:bg-surface-container/10 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-primary mb-0.5">#TRX-98236</div>
-                                        <div className="text-on-surface-variant text-sm">1x Susu Cream, 1x Iced Tea</div>
-                                        <div className="text-[11px] text-outline mt-1 uppercase font-semibold">Cody Fisher</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
-                                            <span className="material-symbols-outlined text-[16px]" data-icon="payments">payments</span> Tunai
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-on-surface/80">24 Okt 2023, 11:45</td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-error-container/20 text-error-dim text-xs font-bold">Gagal</span>
-                                    </td>
-                                    <td className="px-6 py-5 font-bold text-primary text-right">Rp 32.000</td>
-                                </tr>
-                                {/* Row 4 */}
-                                <tr className="hover:bg-surface-container/10 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-primary mb-0.5">#TRX-98237</div>
-                                        <div className="text-on-surface-variant text-sm">6x Signature Box</div>
-                                        <div className="text-[11px] text-outline mt-1 uppercase font-semibold">Devon Lane</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
-                                            <span className="material-symbols-outlined text-[16px]" data-icon="qr_code_2">qr_code_2</span> QRIS
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-on-surface/80">24 Okt 2023, 12:05</td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Berhasil</span>
-                                    </td>
-                                    <td className="px-6 py-5 font-bold text-primary text-right">Rp 185.000</td>
-                                </tr>
-                                {/* Row 5 */}
-                                <tr className="hover:bg-surface-container/10 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-primary mb-0.5">#TRX-98238</div>
-                                        <div className="text-on-surface-variant text-sm">2x Susu Series, 2x Matcha</div>
-                                        <div className="text-[11px] text-outline mt-1 uppercase font-semibold">Bessie Cooper</div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
-                                            <span className="material-symbols-outlined text-[16px]" data-icon="qr_code_2">qr_code_2</span> QRIS
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-on-surface/80">24 Okt 2023, 12:20</td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Berhasil</span>
-                                    </td>
-                                    <td className="px-6 py-5 font-bold text-primary text-right">Rp 88.000</td>
-                                </tr>
-                            </tbody>
+                                {filteredTransaction.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="text-center py-10 text-on-surface-variant">
+                                            Tidak ada transaksi ditemukan
+                                        </td>
+                                    </tr>
+                                ) : currentTransactions.map((item, index) => (
+                                    <tr className="hover:bg-surface-container/10 transition-colors group" key ={index}>
+                                        <td className="px-6 py-5">
+                                            <div className="font-bold text-primary mb-0.5">{item.id_pesanan}</div>
+                                            <div>{item.items.map((p, i) => (
+                                                <span key={i} className="text-on-surface-variant text-sm"> {p.qty}x {p.product.nama} {i < item.items.length - 1 ? ', ' : ''}</span>
+                                            ))}</div>
+                                     
+                                        </td>
+                                        <td className="px-6 py-5 text-center"> 
+                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-[12px] font-bold text-on-surface-variant border border-outline-variant/20">
+                                              <span className="material-symbols-outlined text-[16px]" data-icon={item.payment_method == 'qris' ? 'qr_code' : item.payment_method == 'bank_transfer' ? 'account_balance' : 'money'}>{item.payment_method == 'qris' ? 'qr_code_2' : item.payment_method == 'bank_transfer' ? 'account_balance' : 'money'}</span> 
+                                              {item.payment_method == 'qris' ? 'QRIS' : item.payment_method == 'bank_transfer' ? 'Bank Transfer' : 'Cash'}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5 text-center"> 
+                                            <span>{dayjs(item.created_at).format('DD MMM YYYY')}</span>
+                                            <span className="block text-sm text-on-surface-variant">{dayjs(item.created_at).format('HH:mm')}</span>
+                                        </td>
+                                        <td className="px-6 py-5 text-center"> 
+                                            {item.payment_status === 'success' ? (
+                                                <div className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Berhasil</div>
+                                            ) : item.payment_status === 'failed' ? (
+                                                <div className="inline-block px-4 py-1.5 rounded-full bg-error/10 text-error text-xs font-bold">Gagal</div>
+                                            ) : item.payment_status === 'pending' ? (
+                                                <div className="inline-block px-4 py-1.5 rounded-full bg-outline-variant text-on-tertiary-container text-xs font-bold">Pending</div>
+                                            ) : (
+                                                <div className="inline-block px-4 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold">Pending</div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-5 font-bold text-primary text-right">Rp {item.total.toLocaleString('id-ID')}</td>
+                                    </tr>
+                                ))}
+                             </tbody>
                         </table>
                     </div>
 
                     {/* Pagination */}
                     <div className="px-6 py-5 bg-surface-container/30 flex items-center justify-between border-t border-outline-variant/10">
-                        <span className="text-sm font-medium text-on-surface-variant">Menampilkan 5 dari 142 transaksi</span>
+                        <span className="text-sm font-medium text-on-surface-variant">
+                            Menampilkan {currentTransactions.length > 0 ? indexOfFirstItem + 1 : 0} - {Math.min(indexOfLastItem, filteredTransaction.length)} dari {filteredTransaction.length} transaksi
+                        </span>
+                        
                         <div className="flex items-center gap-2">
-                            <button className="p-2 rounded-full hover:bg-primary/5 text-primary disabled:opacity-30" disabled>
+                            {/* Tombol Sebelumnya */}
+                            <button 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-full hover:bg-primary/5 text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
                                 <span className="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
                             </button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-on-primary text-sm font-bold shadow-sm">1</button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-primary/10 text-on-surface text-sm font-semibold">2</button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-primary/10 text-on-surface text-sm font-semibold">3</button>
-                            <button className="p-2 rounded-full hover:bg-primary/5 text-primary">
+                            {/* Tombol Angka Halaman (Dibuat otomatis berapapun jumlah halamannya) */}
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setCurrentPage(i + 1)}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                                        currentPage === i + 1 
+                                        ? "bg-primary text-on-primary shadow-sm" 
+                                        : "hover:bg-primary/10 text-on-surface"
+                                    }`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            {/* Tombol Selanjutnya */}
+                            <button 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="p-2 rounded-full hover:bg-primary/5 text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
                                 <span className="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
                             </button>
                         </div>

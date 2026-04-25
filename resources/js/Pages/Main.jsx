@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Welcome({ products = [], branches = [] }) {
     useEffect(() => {
@@ -13,33 +14,89 @@ export default function Welcome({ products = [], branches = [] }) {
     const [activeType, setActiveType] = useState('satuan');
     const [activeBranch, setActiveBranch] = useState(null);
     const [showBranchModal, setShowBranchModal] = useState(true);
+    const [message, setMessage] = useState({
+        text: '',
+        type: '',
+    });
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showWaModal, setShowWaModal] = useState(false);
     const [configuringBox, setConfiguringBox] = useState(null);
     const [selectedBoxItems, setSelectedBoxItems] = useState([]);
-
+    
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
     const [formData, setFormData] = useState({
         nama: '',
         nohp: '',
-        alamat: ''
+        alamat: '',
+        payment_method: '',
     });
-
-    const handleOrder = (e) => {
+    const showNotification = (text, type) => {
+        setShowInfoModal(true);
+        setMessage({ text, type });
+        
+        // Menghilangkan notifikasi otomatis setelah 3 detik
+        setTimeout(() => {
+            setShowInfoModal(false);
+            setMessage({ text: '', type: '' });
+        }, 3000);
+    };
+    const clearMessage = () => {
+        setShowInfoModal(false)
+        setMessage({ text: '', type: '' });
+    }
+    const handleOrder = async (e) => {
         e.preventDefault();
+
+        if (!formData.nama || !formData.nohp || !formData.alamat) {
+            showNotification('Harap lengkapi data diri dan alamat pengiriman.', 'error');
+            return;
+        }
+
+        if (!formData.payment_method) {
+            showNotification('Harap pilih metode pembayaran terlebih dahulu.', 'error');
+            return;
+        }
+
         const timestamp = Date.now().toString().slice(-4);
         const idPesanan = `ORD-${Date.now().toString().slice(-6)}`;
 
         const data = {
             id_pesanan: idPesanan,
-
+            branch_id: activeBranch.id,
             ...formData,
             cart: cart,
             total: grandTotal,
-            tgl: new Date().toISOString().slice(0, 19).replace('T', ' ')
+
         };
-        console.log(data);
+        try{
+            const response = await axios.post('/checkout', data);
+            if(response.data.status === 'success'){
+                window.snap.pay(response.data.snap_token, {
+                    onSuccess: function(result) {
+                        showNotification('Pembayaran berhasil!', 'success');
+                        setCart([]); // Kosongkan keranjang
+                    },
+                    onPending: function(result) {
+                        showNotification('Menunggu pembayaran Anda.', 'info');
+                    },
+                    onError: function(result) {
+                        showNotification('Pembayaran gagal.', 'error');
+                    },
+                    onClose: function() {
+                        showNotification('Anda menutup jendela sebelum menyelesaikan pembayaran', 'error');
+                    }
+                });
+            }
+        }catch (error) {
+            // Tampilkan detail error dari backend ke Console
+            console.log("Detail Error:", error.response?.data);
+            
+            // Tampilkan pesan error spesifik ke Toast Notification kita
+            const errorMessage = error.response?.data?.message || 'Terjadi kesalahan internal server.';
+            showNotification(errorMessage, 'error');
+        }
+
     }
     const addToCart = (product) => {
         const currentStockData = product.stocks?.find((stock) => stock.branch_id === activeBranch?.id);
@@ -48,11 +105,19 @@ export default function Welcome({ products = [], branches = [] }) {
             const existingItem = cart.find(item => item.id === product.id && item.type === 'satuan');
 
             if (existingItem) {
-                setCart(cart.map(item =>
+                if (existingItem.qty >= maxStock) {
+                    showNotification(`Stok ${product.nama} di cabang ${activeBranch.nama} habis`, 'error');
+                    return;
+                }
+                setCart(cart.map(item => 
                     item.id === product.id ? { ...item, qty: item.qty + 1 } : item
                 ));
             } else {
-                setCart([...cart, {
+                if(maxStock <= 0){
+                    showNotification(`Stok ${product.nama} di cabang ${activeBranch.nama} habis`, 'error');
+                    return;
+                }
+                setCart([...cart, { 
                     id: product.id,
                     kode_produk: product.kode_produk,
                     nama: product.nama,
@@ -160,12 +225,11 @@ export default function Welcome({ products = [], branches = [] }) {
 
             {/* TopNavBar */}
             <nav className="fixed top-0 w-full z-50 bg-[#fef6e7]/80 dark:bg-[#322e25]/80 backdrop-blur-xl shadow-sm dark:shadow-none">
-                <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+                <div className="relative flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
                     <span className="text-2xl font-bold tracking-tight text-[#76543d] dark:text-[#fef6e7] brand-font">Dollin Donuts</span>
-                    <div className="hidden md:flex items-center gap-8">
-                        <a className="text-[#76543d] font-bold border-b-2 border-[#76543d] pb-1 body-md transition-opacity duration-300" href="#menu">Menu</a>
-                        <a className="text-[#76543d]/70 dark:text-[#dcd4c0]/70 hover:text-[#76543d] body-md transition-opacity duration-300" href="#order">Order Now</a>
-                        <a className="text-[#76543d]/70 dark:text-[#dcd4c0]/70 hover:text-[#76543d] body-md transition-opacity duration-300" href="#contact">Contact</a>
+                    <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-8">
+                        <a className="text-[#76543d] hover:font-bold hover:border-b-2 hover:border-[#76543d] pb-1 body-md cursor-pointer transition-opacity duration-300" href="#menu">Menu</a>
+                        <Link href="/Pesanan" className="text-[#76543d] hover:font-bold hover:border-b-2 hover:border-[#76543d] pb-1 body-md cursor-pointer transition-all duration-100">Status Pesanan</Link>
                     </div>
                     <div className="flex items-end gap-4">
                         {/* Tombol Login/Dashboard yang terhubung ke sistem */}
@@ -184,8 +248,43 @@ export default function Welcome({ products = [], branches = [] }) {
                     </div>
                 </div>
             </nav>
-            {/* Modal information */}
+            {/* Modern Toast Notification */}
+            {showInfoModal && (
+                <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-10 fade-in duration-300">
+                    <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] border ${
+                        message.type === 'success' 
+                            ? 'bg-[#f0fdf4]/95 dark:bg-green-900/90 border-green-200 text-green-800' 
+                            : message.type === 'error'
+                            ? 'bg-[#fef2f2]/95 dark:bg-red-900/90 border-red-200 text-red-800'
+                            : 'bg-white/95 dark:bg-surface-container-highest/90 border-primary/20 text-on-surface'
+                        } backdrop-blur-xl min-w-[320px] max-w-md`}>
+                        
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+                            message.type === 'success' ? 'bg-green-100 text-green-600' : 
+                            message.type === 'error' ? 'bg-red-100 text-red-600' : 
+                            'bg-primary/10 text-primary'
+                        }`}>
+                            <span className="material-symbols-outlined font-black text-2xl">
+                                {message.type === 'success' ? 'check_circle' : message.type === 'error' ? 'error' : 'info'}
+                            </span>
+                        </div>
 
+                        <div className="flex-1">
+                            <h3 className="font-bold text-sm tracking-wide uppercase">
+                                {message.type === 'success' ? 'Berhasil' : message.type === 'error' ? 'Peringatan' : 'Informasi'}
+                            </h3>
+                            <p className="text-xs font-medium opacity-90 mt-0.5 leading-relaxed">{message.text}</p>
+                        </div>
+
+                        <button 
+                            onClick={() => clearMessage()} 
+                            className="flex-shrink-0 p-2 hover:bg-black/5 rounded-full transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-xl">close</span>
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Modal Pilih Cabang (Muncul Otomatis) */}
             {showBranchModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 animate-in fade-in duration-300">
@@ -457,31 +556,65 @@ export default function Welcome({ products = [], branches = [] }) {
                                         name="nama"
                                         type="text"
                                         id="nama"
-                                        onChange={(e) => setFormData({ nama: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
                                         placeholder="Masukkan nama Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="nohp" className="block text-sm font-bold text-on-surface-variant mb-2">No. HP</label>
-                                    <input
-                                        required
-                                        name="nohp"
-                                        type="number"
-                                        id="nohp"
-                                        onChange={(e) => setFormData({ nohp: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
-                                        placeholder="Masukkan No. HP Anda" />
+                                    <input 
+                                    required 
+                                    name="nohp" 
+                                    type="number" 
+                                    id="nohp" 
+                                    onChange={(e) => setFormData({ ...formData, nohp: e.target.value })}
+
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
+                                    placeholder="Masukkan No. HP Anda" />
                                 </div>
                                 <div>
                                     <label htmlFor="alamat" className="block text-sm font-bold text-on-surface-variant mb-2">Alamat</label>
-                                    <input
-                                        required
-                                        name="alamat"
-                                        type="text"
-                                        id="alamat"
-                                        onChange={(e) => setFormData({ alamat: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none"
-                                        placeholder="Masukkan Alamat Anda" />
+                                    <input 
+                                    required 
+                                    name="alamat" 
+                                    type="text" 
+                                    id="alamat" 
+                                    onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
+
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-on-surface-variant/10 focus:border-primary focus:outline-none" 
+                                    placeholder="Masukkan Alamat Anda" />
+                                </div>
+                                <div>
+                                    <label htmlFor="payment_method" className="block text-sm font-bold text-on-surface-variant mb-3">Metode Pembayaran</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { id: 'qris', name: 'QRIS / GoPay', type: 'Instant Payment', color: 'text-green-600' },
+                                            { id: 'bca_va', name: 'BCA', type: 'Virtual Account', color: 'text-[#0066AE]' },
+                                            { id: 'mandiri_va', name: 'Mandiri', type: 'Virtual Account', color: 'text-[#003D79]' },
+                                            { id: 'bni_va', name: 'BNI', type: 'Virtual Account', color: 'text-[#005E6A]' },
+                                            { id: 'bri_va', name: 'BRI', type: 'Virtual Account', color: 'text-[#00529C]' },
+                                            { id: 'other_va', name: 'Bank Lainnya', type: 'Virtual Account', color: 'text-gray-600' }
+                                        ].map((method) => (
+                                            <div 
+                                                key={method.id}
+                                                onClick={() => setFormData({ ...formData, payment_method: method.id })}
+                                                className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-start justify-center gap-1 group overflow-hidden ${formData.payment_method === method.id ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' : 'border-on-surface-variant/20 hover:border-primary/50 bg-surface'}`}
+                                            >
+                                                <span className={`text-base font-black ${method.color}`}>{method.name}</span>
+                                                <span className="text-[11px] font-medium text-on-surface-variant">{method.type}</span>
+                                                
+                                                {/* Indikator Aktif (Ceklis) */}
+                                                <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.payment_method === method.id ? 'border-primary bg-primary' : 'border-on-surface-variant/30'}`}>
+                                                    {formData.payment_method === method.id && (
+                                                        <svg className="w-3 h-3 text-on-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {formData.payment_method === '' && (
+                                        <p className="text-red-500 text-xs mt-2 font-medium">* Silakan pilih metode pembayaran terlebih dahulu</p>
+                                    )}
                                 </div>
                                 {/* Rincian Pembayaran */}
                                 <div className="bg-surface-container-low p-4 rounded-xl mt-4 mb-6 border border-on-surface-variant/10">
@@ -507,7 +640,7 @@ export default function Welcome({ products = [], branches = [] }) {
                                     <span className="text-2xl font-black text-primary">Rp {grandTotal.toLocaleString('id-ID')}</span>
                                 </div>
                                 <button className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black text-lg hover:-translate-y-1 transition-all shadow-xl shadow-primary/20 cursor-pointer">
-                                    Pesan Sekarang via WhatsApp
+                                    Pesan Sekarang
                                 </button>
                             </div>
                         </form>
@@ -638,6 +771,7 @@ export default function Welcome({ products = [], branches = [] }) {
                     </div>
                 </div>
             </footer>
+
         </div>
     );
 }

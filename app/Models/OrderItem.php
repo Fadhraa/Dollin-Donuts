@@ -6,18 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $fillable = [
-        'order_id',
-        'product_id',
-        'qty',
-        'harga',
-        'tipe',
-        'isi_paket'
-    ];
-
-    protected $casts = [
-        'isi_paket' => 'array'
-    ];
+    protected $guarded = ['id'];
 
     public function product()
     {

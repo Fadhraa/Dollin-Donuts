@@ -16,9 +16,9 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained();
             $table->integer('qty');
-            $table->integer('harga'); // simpan harga saat dibeli (fixed)
-            $table->string('tipe'); // satuan atau paket
-            $table->json('isi_paket')->nullable(); // menyimpan ID donat dalam box
+            $table->integer('harga');
+            $table->string('tipe');
+            $table->json('isi_paket')->nullable();
             $table->timestamps();
         });
     }
