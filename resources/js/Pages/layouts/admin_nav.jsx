@@ -72,6 +72,7 @@ export default function AdminNav({children}) {
             <main className="flex-1 overflow-y-auto">
                 {children}
             </main>
+           
         </div>
     );
 }

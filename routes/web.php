@@ -7,12 +7,18 @@ use Inertia\Inertia;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\WebhookController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::post('/order/submit', [OrderController::class, 'store'])->name('order.submit');
-
+Route::post('/checkout', [CheckoutController::class, 'process']);
+Route::post('/api/midtrans-callback', [WebhookController::class, 'handler']);
+Route::get('/Pesanan', fn() => Inertia::render('Status_Pesanan'))->name('pesanan');
+Route::post('/api/cek-pesanan', [OrderController::class, 'cekPesanan']);
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 Route::post('/login', [AuthController::class, 'Login']);
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', fn() => Inertia::render('admin/dashboard'))->name('dashboard');
     // Product
@@ -22,7 +28,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
     // Orders
     Route::get('/admin/orders', fn() => Inertia::render('admin/orders'))->name('orders');
-    Route::get('/admin/transaction', fn() => Inertia::render('admin/transaction'))->name('transaction');
-    Route::get('/admin/ordermanagement', fn() => Inertia::render('admin/ordermanagement'))->name('ordermanagement');
+    Route::get('/admin/transaction', [OrderController::class, 'transaction'])->name('transaction');
+    Route::get('/admin/ordermanagement', [OrderController::class, 'management'])->name('ordermanagement');
+    Route::patch('/admin/ordermanagement/{id}/status', [OrderController::class, 'updateStatus'])->name('ordermanagement.status');
+
     Route::post('/logout', [AuthController::class, 'Logout']);
 });
