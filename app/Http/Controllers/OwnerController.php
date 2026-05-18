@@ -99,8 +99,8 @@ class OwnerController extends Controller
             'alamat' => 'required|string',
             'admin_email' => 'required|email|unique:users,email',
             'admin_password' => 'required|string|min:6',
-            'latitude' => 'nullable|string',
-            'longitude' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         // 1. Buat cabangnya dulu
@@ -138,8 +138,8 @@ class OwnerController extends Controller
             'admin_email' => 'required|email|unique:users,email,' . $userId,
             'admin_password' => 'nullable|string|min:6',
             'is_active' => 'boolean',
-            'latitude' => 'nullable|string',
-            'longitude' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         // 1. Update data cabang

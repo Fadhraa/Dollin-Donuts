@@ -64,6 +64,11 @@ class CheckoutController extends Controller
         Config::$isProduction = false;
         Config::$isSanitized = true;
         Config::$is3ds = true;
+        // Nonaktifkan verifikasi SSL untuk cURL (mengatasi error SSL pada Windows/XAMPP lokal)
+        Config::$curlOptions = [
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         // 3. Persiapkan Parameter Transaksi
         $params = [

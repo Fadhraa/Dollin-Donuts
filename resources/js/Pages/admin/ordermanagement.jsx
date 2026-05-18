@@ -238,9 +238,27 @@ function OrderManagement({ orders = [], stats = {}, filters = {} }) {
                                                     </select>
                                                 </td>
                                                 <td className="px-6 py-6 text-right">
-                                                    <button className="p-2 text-stone-400 hover:text-primary transition-colors" title="Lihat Detail Pesanan">
-                                                        <span className="material-symbols-outlined">visibility</span>
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {order.order_status === 'Selesai' && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    let phone = order.nohp;
+                                                                    if (phone && phone.startsWith('0')) {
+                                                                        phone = '62' + phone.substring(1);
+                                                                    }
+                                                                    const message = `Halo Kak ${order.nama},\n\nPesanan Anda dengan ID *${order.id_pesanan}* di Dollin Donuts telah *SELESAI* dan siap dinikmati.\n\nTerima kasih telah berbelanja di tempat kami! 😊🍩`;
+                                                                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                                                }}
+                                                                className="p-2 text-green-500 hover:bg-green-50 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-green-200" 
+                                                                title="Kabari Customer via WhatsApp"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[20px]">chat</span>
+                                                            </button>
+                                                        )}
+                                                        <button className="p-2 text-stone-400 hover:text-primary transition-colors rounded-full" title="Lihat Detail Pesanan">
+                                                            <span className="material-symbols-outlined">visibility</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

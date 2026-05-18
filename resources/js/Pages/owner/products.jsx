@@ -159,9 +159,8 @@ function Products({ products = [], satuanProducts = [] }) {
                                         <label className="block text-sm font-bold text-on-surface-variant mb-1">Kategori</label>
                                         <select value={data.kategori} onChange={e => setData('kategori', e.target.value)} className="w-full bg-surface-container border border-on-surface-variant/20 focus:border-primary focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2 text-sm outline-none">
                                             <option value="donuts">Donuts</option>
-                                            <option value="mochi">Mochi</option>
+                                            <option value="mochi">Donuts Mochi</option>
                                             <option value="minuman">Minuman</option>
-                                            <option value="pastry">Pastry</option>
                                         </select>
                                         {errors.kategori && <span className="text-red-500 text-xs">{errors.kategori}</span>}
                                     </div>
